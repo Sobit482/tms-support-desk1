@@ -6,7 +6,13 @@ const auth    = require('../middleware/auth');
 router.get('/', auth(['admin']), async (req, res) => {
   try {
     const { rows } = await req.app.get('db').query(
-      `SELECT user_id, full_name, email, role, is_active, created_at FROM users ORDER BY full_name`
+      `SELECT user_id    AS "UserID",
+              full_name  AS "FullName",
+              email      AS "Email",
+              role       AS "Role",
+              is_active  AS "IsActive",
+              created_at AS "CreatedAt"
+       FROM users ORDER BY full_name`
     );
     res.json(rows);
   } catch (e) {
@@ -17,7 +23,10 @@ router.get('/', auth(['admin']), async (req, res) => {
 router.get('/agents', auth, async (req, res) => {
   try {
     const { rows } = await req.app.get('db').query(
-      `SELECT user_id, full_name, role FROM users WHERE role IN ('support','technical') AND is_active = true ORDER BY full_name`
+      `SELECT user_id   AS "UserID",
+              full_name AS "FullName",
+              role      AS "Role"
+       FROM users WHERE role IN ('support','technical') AND is_active = true ORDER BY full_name`
     );
     res.json(rows);
   } catch (e) {

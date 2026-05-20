@@ -44,16 +44,27 @@ router.get('/', auth, async (req, res) => {
     if (dateFrom)   { params.push(new Date(dateFrom)); where += ` AND t.raised_at>=$${params.length}`; }
     if (dateTo)     { params.push(new Date(dateTo));   where += ` AND t.raised_at<=$${params.length}`; }
     const { rows } = await db.query(`
-      SELECT t.ticket_id, t.heading, t.priority, t.status, t.raised_at,
-             t.sla_breached, t.sla_deadline, t.client_account_id,
-             t.is_rejected, t.rejection_reason,
-             EXTRACT(EPOCH FROM (t.sla_deadline - NOW()))/60 AS sla_remaining_minutes,
+      SELECT t.ticket_id                  AS "TicketID",
+             t.heading                    AS "Heading",
+             t.priority                   AS "Priority",
+             t.status                     AS "Status",
+             t.raised_at                  AS "RaisedAt",
+             t.sla_breached               AS "SLABreached",
+             t.sla_deadline               AS "SLADeadline",
+             t.client_account_id          AS "ClientAccountID",
+             t.is_rejected                AS "IsRejected",
+             t.rejection_reason           AS "RejectionReason",
+             EXTRACT(EPOCH FROM (t.sla_deadline - NOW()))/60 AS "SLARemainingMinutes",
              CASE WHEN t.status IN('closed','rejected') THEN 'N/A'
                   WHEN NOW() > t.sla_deadline THEN 'BREACHED'
                   WHEN EXTRACT(EPOCH FROM (t.sla_deadline - NOW()))/60 < 60 THEN 'WARNING'
-                  ELSE 'OK' END AS sla_status,
-             b.broker_id, b.broker_name, c.category_name, s.sub_issue_name,
-             u.full_name AS raised_by, a.full_name AS assigned_to
+                  ELSE 'OK' END           AS "SLAStatus",
+             b.broker_id                  AS "BrokerID",
+             b.broker_name                AS "BrokerName",
+             c.category_name              AS "CategoryName",
+             s.sub_issue_name             AS "SubIssueName",
+             u.full_name                  AS "RaisedBy",
+             a.full_name                  AS "AssignedTo"
       FROM tickets t
       LEFT JOIN brokers b ON t.broker_id=b.broker_id
       LEFT JOIN ticket_categories c ON t.category_id=c.category_id
@@ -76,15 +87,31 @@ router.get('/:id', auth, async (req, res) => {
     const db = req.app.get('db');
     const id = req.params.id;
     const { rows: tRows } = await db.query(`
-      SELECT t.*, b.broker_name, b.contact_email AS broker_email,
-             c.category_name, c.sla_hours, s.sub_issue_name,
-             u1.full_name AS raised_by, u2.full_name AS assigned_to,
-             u3.full_name AS closed_by, u4.full_name AS rejected_by_name,
-             EXTRACT(EPOCH FROM (t.sla_deadline - NOW()))/60 AS sla_remaining_minutes,
+      SELECT t.*,
+             b.broker_name                AS "BrokerName",
+             b.contact_email              AS "BrokerEmail",
+             c.category_name              AS "CategoryName",
+             c.sla_hours                  AS "SLAHours",
+             s.sub_issue_name             AS "SubIssueName",
+             u1.full_name                 AS "RaisedBy",
+             u2.full_name                 AS "AssignedTo",
+             u3.full_name                 AS "ClosedBy",
+             u4.full_name                 AS "RejectedByName",
+             t.ticket_id                  AS "TicketID",
+             t.heading                    AS "Heading",
+             t.priority                   AS "Priority",
+             t.status                     AS "Status",
+             t.raised_at                  AS "RaisedAt",
+             t.sla_breached               AS "SLABreached",
+             t.sla_deadline               AS "SLADeadline",
+             t.client_account_id          AS "ClientAccountID",
+             t.last_updated_at            AS "LastUpdatedAt",
+             t.resolution_notes           AS "ResolutionNotes",
+             EXTRACT(EPOCH FROM (t.sla_deadline - NOW()))/60 AS "SLARemainingMinutes",
              CASE WHEN t.status IN('closed','rejected') THEN 'N/A'
                   WHEN NOW() > t.sla_deadline THEN 'BREACHED'
                   WHEN EXTRACT(EPOCH FROM (t.sla_deadline - NOW()))/60 < 60 THEN 'WARNING'
-                  ELSE 'OK' END AS sla_status
+                  ELSE 'OK' END           AS "SLAStatus"
       FROM tickets t
       LEFT JOIN brokers b ON t.broker_id=b.broker_id
       LEFT JOIN ticket_categories c ON t.category_id=c.category_id
@@ -98,12 +125,16 @@ router.get('/:id', auth, async (req, res) => {
     if (!tRows.length) return res.status(404).json({ error: 'Ticket not found' });
     const ticket = tRows[0];
     const { rows: timeline } = await db.query(`
-      SELECT tl.action_type, tl.action_note, tl.action_at, u.full_name AS action_by_name
+      SELECT tl.action_type                AS "ActionType",
+             tl.action_note               AS "ActionNote",
+             tl.action_at                 AS "ActionAt",
+             u.full_name                  AS "ActionByName"
       FROM ticket_timeline tl LEFT JOIN users u ON tl.action_by=u.user_id
       WHERE tl.ticket_id=$1 ORDER BY tl.action_at ASC`, [id]
     );
     const { rows: fields } = await db.query(
-      `SELECT field_name, field_value FROM ticket_fields WHERE ticket_id=$1 ORDER BY field_id`, [id]
+      `SELECT field_name AS "FieldName", field_value AS "FieldValue"
+       FROM ticket_fields WHERE ticket_id=$1 ORDER BY field_id`, [id]
     );
     ticket.timeline      = timeline;
     ticket.dynamicFields = fields;

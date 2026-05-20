@@ -5,24 +5,46 @@ const auth    = require('../middleware/auth');
 router.get('/broker-summary', auth, async (req, res) => {
   try {
     const { rows } = await req.app.get('db').query(`
-      SELECT b.broker_id, b.broker_name, b.contact_person,
-        COUNT(t.ticket_id) AS total_tickets,
-        SUM(CASE WHEN t.status='open'       THEN 1 ELSE 0 END) AS open_tickets,
-        SUM(CASE WHEN t.status='inprogress' THEN 1 ELSE 0 END) AS in_progress,
-        SUM(CASE WHEN t.status IN('resolved','closed') THEN 1 ELSE 0 END) AS resolved,
-        SUM(CASE WHEN t.status='rejected'   THEN 1 ELSE 0 END) AS rejected,
-        SUM(CASE WHEN t.priority='critical' THEN 1 ELSE 0 END) AS critical_tickets,
-        SUM(CASE WHEN t.sla_breached=true   THEN 1 ELSE 0 END) AS sla_breached,
+      SELECT b.broker_id                                                           AS "BrokerID",
+             b.broker_name                                                         AS "BrokerName",
+             b.contact_person                                                      AS "ContactPerson",
+        COUNT(t.ticket_id)                                                         AS "TotalTickets",
+        SUM(CASE WHEN t.status='open'                    THEN 1 ELSE 0 END)        AS "OpenTickets",
+        SUM(CASE WHEN t.status='inprogress'              THEN 1 ELSE 0 END)        AS "InProgress",
+        SUM(CASE WHEN t.status IN('resolved','closed')   THEN 1 ELSE 0 END)        AS "Resolved",
+        SUM(CASE WHEN t.status='rejected'                THEN 1 ELSE 0 END)        AS "Rejected",
+        SUM(CASE WHEN t.priority='critical'              THEN 1 ELSE 0 END)        AS "CriticalTickets",
+        SUM(CASE WHEN t.sla_breached=true                THEN 1 ELSE 0 END)        AS "SLABreached",
         AVG(CASE WHEN t.closed_at IS NOT NULL
-            THEN EXTRACT(EPOCH FROM (t.closed_at - t.raised_at))/60 ELSE NULL END) AS avg_resolution_minutes
+            THEN EXTRACT(EPOCH FROM (t.closed_at - t.raised_at))/60 ELSE NULL END) AS "AvgResolutionMinutes"
       FROM brokers b LEFT JOIN tickets t ON b.broker_id=t.broker_id
       WHERE b.is_active=true
       GROUP BY b.broker_id, b.broker_name, b.contact_person
-      ORDER BY total_tickets DESC`
+      ORDER BY "TotalTickets" DESC`
     );
     res.json(rows);
   } catch (e) {
     res.status(500).json({ error: 'Failed to load broker report' });
+  }
+});
+
+router.get('/overview', auth, async (req, res) => {
+  try {
+    const { rows } = await req.app.get('db').query(`
+      SELECT
+        COUNT(*)                                                         AS "TotalTickets",
+        SUM(CASE WHEN status='open'       THEN 1 ELSE 0 END)            AS "OpenTickets",
+        SUM(CASE WHEN status='inprogress' THEN 1 ELSE 0 END)            AS "InProgress",
+        SUM(CASE WHEN status='resolved'   THEN 1 ELSE 0 END)            AS "Resolved",
+        SUM(CASE WHEN status='closed'     THEN 1 ELSE 0 END)            AS "Closed",
+        SUM(CASE WHEN status='rejected'   THEN 1 ELSE 0 END)            AS "Rejected",
+        SUM(CASE WHEN sla_breached=true   THEN 1 ELSE 0 END)            AS "SLABreached",
+        SUM(CASE WHEN priority='critical' THEN 1 ELSE 0 END)            AS "Critical"
+      FROM tickets`
+    );
+    res.json(rows[0]);
+  } catch (e) {
+    res.status(500).json({ error: 'Failed to load overview' });
   }
 });
 
@@ -33,7 +55,7 @@ router.get('/date-range', auth, async (req, res) => {
     const db = req.app.get('db');
     const params = [new Date(dateFrom), new Date(new Date(dateTo).setHours(23,59,59,999))];
     let catFilter = '', brokerFilter = '';
-    if (categoryName) { params.push(categoryName); catFilter   = ` AND c.category_name=$${params.length}`; }
+    if (categoryName) { params.push(categoryName); catFilter    = ` AND c.category_name=$${params.length}`; }
     if (brokerID)     { params.push(brokerID);     brokerFilter = ` AND t.broker_id=$${params.length}`; }
     const { rows: tickets } = await db.query(`
       SELECT t.ticket_id, t.heading, t.priority, t.status, t.raised_at,
@@ -62,15 +84,15 @@ router.get('/date-range', auth, async (req, res) => {
     }
     const enriched = tickets.map(t => ({ ...t, fields: fieldMap[t.ticket_id] || {} }));
     const stats = {
-      total:      enriched.length,
-      open:       enriched.filter(t => t.status==='open').length,
-      inProgress: enriched.filter(t => t.status==='inprogress').length,
-      resolved:   enriched.filter(t => t.status==='resolved').length,
-      closed:     enriched.filter(t => t.status==='closed').length,
-      rejected:   enriched.filter(t => t.status==='rejected').length,
-      slaBreached:enriched.filter(t => t.sla_breached).length,
-      critical:   enriched.filter(t => t.priority==='critical').length,
-      high:       enriched.filter(t => t.priority==='high').length,
+      total:       enriched.length,
+      open:        enriched.filter(t => t.status==='open').length,
+      inProgress:  enriched.filter(t => t.status==='inprogress').length,
+      resolved:    enriched.filter(t => t.status==='resolved').length,
+      closed:      enriched.filter(t => t.status==='closed').length,
+      rejected:    enriched.filter(t => t.status==='rejected').length,
+      slaBreached: enriched.filter(t => t.sla_breached).length,
+      critical:    enriched.filter(t => t.priority==='critical').length,
+      high:        enriched.filter(t => t.priority==='high').length,
     };
     const catBreakdown = {};
     enriched.forEach(t => { catBreakdown[t.category_name] = (catBreakdown[t.category_name]||0)+1; });
@@ -101,14 +123,14 @@ router.get('/dashboard', auth, async (req, res) => {
   try {
     const { rows } = await req.app.get('db').query(`
       SELECT
-        COUNT(*) AS total,
-        SUM(CASE WHEN status='open'       THEN 1 ELSE 0 END) AS open,
-        SUM(CASE WHEN status='inprogress' THEN 1 ELSE 0 END) AS in_progress,
-        SUM(CASE WHEN status='resolved'   THEN 1 ELSE 0 END) AS resolved,
-        SUM(CASE WHEN status='closed'     THEN 1 ELSE 0 END) AS closed,
-        SUM(CASE WHEN status='rejected'   THEN 1 ELSE 0 END) AS rejected,
-        SUM(CASE WHEN sla_breached=true   THEN 1 ELSE 0 END) AS sla_breached,
-        SUM(CASE WHEN priority='critical' THEN 1 ELSE 0 END) AS critical
+        COUNT(*)                                                  AS "TotalTickets",
+        SUM(CASE WHEN status='open'       THEN 1 ELSE 0 END)     AS "OpenTickets",
+        SUM(CASE WHEN status='inprogress' THEN 1 ELSE 0 END)     AS "InProgress",
+        SUM(CASE WHEN status='resolved'   THEN 1 ELSE 0 END)     AS "Resolved",
+        SUM(CASE WHEN status='closed'     THEN 1 ELSE 0 END)     AS "Closed",
+        SUM(CASE WHEN status='rejected'   THEN 1 ELSE 0 END)     AS "Rejected",
+        SUM(CASE WHEN sla_breached=true   THEN 1 ELSE 0 END)     AS "SLABreached",
+        SUM(CASE WHEN priority='critical' THEN 1 ELSE 0 END)     AS "Critical"
       FROM tickets`
     );
     res.json(rows[0]);
