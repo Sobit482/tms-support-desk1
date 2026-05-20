@@ -1,0 +1,1149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>TMS Support Desk</title>
+<style>
+  :root {
+    --bg:        #0d1117;
+    --surface:   #161b22;
+    --surface2:  #1e2330;
+    --border:    #30363d;
+    --accent:    #5e72eb;
+    --accent2:   #7c8ff5;
+    --text:      #e6edf3;
+    --muted:     #8b949e;
+    --critical:  #f05c6e;
+    --high:      #f5a623;
+    --medium:    #f5d020;
+    --low:       #22d3a0;
+    --open:      #5e72eb;
+    --inprogress:#f5a623;
+    --resolved:  #22d3a0;
+    --closed:    #8b949e;
+    --sla-ok:    #22d3a0;
+    --sla-warn:  #f5a623;
+    --sla-breach:#f05c6e;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+         background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  /* ── Login ─────────────────────────────────────── */
+  #login-screen {
+    display: flex; align-items: center; justify-content: center;
+    min-height: 100vh; background: var(--bg);
+  }
+  .login-box {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 40px; width: 380px;
+    box-shadow: 0 8px 32px rgba(0,0,0,.5);
+  }
+  .login-box h1 { font-size: 22px; margin-bottom: 6px; color: var(--accent2); }
+  .login-box p  { color: var(--muted); font-size: 13px; margin-bottom: 28px; }
+  .form-group   { margin-bottom: 18px; }
+  .form-group label { display: block; font-size: 12px; color: var(--muted);
+                      text-transform: uppercase; letter-spacing: .5px; margin-bottom: 6px; }
+  input, select, textarea {
+    width: 100%; padding: 9px 12px; background: var(--surface2);
+    border: 1px solid var(--border); border-radius: 6px;
+    color: var(--text); font-size: 14px; outline: none; transition: border .2s;
+  }
+  input:focus, select:focus, textarea:focus { border-color: var(--accent); }
+  textarea { resize: vertical; min-height: 80px; }
+  .btn {
+    padding: 9px 18px; border: none; border-radius: 6px; font-size: 14px;
+    cursor: pointer; font-weight: 600; transition: opacity .2s;
+  }
+  .btn:hover { opacity: .85; }
+  .btn-primary  { background: var(--accent);  color: #fff; }
+  .btn-success  { background: var(--low);     color: #000; }
+  .btn-danger   { background: var(--critical);color: #fff; }
+  .btn-warning  { background: var(--high);    color: #000; }
+  .btn-purple   { background: #7c3aed;        color: #fff; }
+  .btn-sm { padding: 5px 11px; font-size: 12px; }
+  .btn-full { width: 100%; }
+  .err-msg { color: var(--critical); font-size: 13px; margin-top: 10px; text-align: center; }
+
+  /* ── App shell ──────────────────────────────────── */
+  #app { display: none; }
+  .topbar {
+    height: 54px; background: var(--surface); border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; padding: 0 20px; gap: 16px; position: sticky; top: 0; z-index: 100;
+  }
+  .topbar-logo { font-weight: 700; font-size: 16px; color: var(--accent2); flex: 1; }
+  .topbar-user { font-size: 13px; color: var(--muted); }
+  .topbar-role {
+    font-size: 11px; padding: 2px 8px; border-radius: 20px;
+    background: var(--accent); color: #fff; text-transform: uppercase;
+  }
+
+  /* ── Nav tabs ───────────────────────────────────── */
+  .nav { display: flex; padding: 0 20px; background: var(--surface);
+         border-bottom: 1px solid var(--border); gap: 4px; }
+  .nav-tab {
+    padding: 10px 16px; font-size: 13px; cursor: pointer; border: none;
+    background: none; color: var(--muted); border-bottom: 2px solid transparent;
+    transition: all .2s;
+  }
+  .nav-tab:hover   { color: var(--text); }
+  .nav-tab.active  { color: var(--accent2); border-bottom-color: var(--accent); }
+
+  /* ── Main content ───────────────────────────────── */
+  .main { padding: 24px 20px; }
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* ── Stats cards ────────────────────────────────── */
+  .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px,1fr)); gap: 14px; margin-bottom: 24px; }
+  .stat-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 18px; text-align: center;
+  }
+  .stat-card .num   { font-size: 32px; font-weight: 700; line-height: 1; }
+  .stat-card .label { font-size: 12px; color: var(--muted); margin-top: 6px; text-transform: uppercase; }
+
+  /* ── Filters ────────────────────────────────────── */
+  .filters {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 14px 16px;
+    display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; margin-bottom: 18px;
+  }
+  .filters .fg { display: flex; flex-direction: column; gap: 4px; }
+  .filters .fg label { font-size: 11px; color: var(--muted); text-transform: uppercase; }
+  .filters select, .filters input { width: auto; min-width: 140px; padding: 7px 10px; font-size: 13px; }
+
+  /* ── Table ──────────────────────────────────────── */
+  .table-wrap { background: var(--surface); border: 1px solid var(--border);
+                border-radius: 10px; overflow: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { padding: 10px 14px; text-align: left; font-size: 11px; text-transform: uppercase;
+       color: var(--muted); border-bottom: 1px solid var(--border); white-space: nowrap; }
+  td { padding: 10px 14px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--surface2); }
+  .badge {
+    display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 11px;
+    font-weight: 600; text-transform: uppercase;
+  }
+  .badge-critical  { background: #f05c6e22; color: var(--critical); border: 1px solid var(--critical); }
+  .badge-high      { background: #f5a62322; color: var(--high);     border: 1px solid var(--high); }
+  .badge-medium    { background: #f5d02022; color: var(--medium);   border: 1px solid var(--medium); }
+  .badge-low       { background: #22d3a022; color: var(--low);      border: 1px solid var(--low); }
+  .badge-open      { background: #5e72eb22; color: var(--open);     border: 1px solid var(--open); }
+  .badge-inprogress{ background: #f5a62322; color: var(--inprogress);border: 1px solid var(--inprogress); }
+  .badge-resolved  { background: #22d3a022; color: var(--resolved); border: 1px solid var(--resolved); }
+  .badge-closed    { background: #8b949e22; color: var(--closed);   border: 1px solid var(--closed); }
+  .badge-rejected  { background: #f05c6e22; color: var(--critical); border: 1px solid var(--critical); }
+  .badge-BREACHED  { background: #f05c6e22; color: var(--critical); border: 1px solid var(--critical); }
+  .badge-WARNING   { background: #f5a62322; color: var(--high);     border: 1px solid var(--high); }
+  .badge-OK        { background: #22d3a022; color: var(--low);      border: 1px solid var(--low); }
+  .badge-NA        { background: #8b949e22; color: var(--closed);   border: 1px solid var(--closed); }
+
+  /* ── Dynamic fields box ─────────────────────────── */
+  #nt-dynamic-fields {
+    background: var(--surface2); border: 1px solid var(--accent);
+    border-radius: 8px; padding: 16px; margin-bottom: 16px; display: none;
+  }
+  #nt-dynamic-fields h4 {
+    font-size: 12px; text-transform: uppercase; color: var(--accent2);
+    letter-spacing: .5px; margin-bottom: 12px;
+  }
+  .dynamic-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 500px) { .dynamic-grid { grid-template-columns: 1fr; } }
+
+  /* ── Modal ──────────────────────────────────────── */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,.7); z-index: 200; align-items: center; justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; width: min(680px,95vw); max-height: 90vh;
+    overflow-y: auto; padding: 28px;
+  }
+  .modal h2 { font-size: 18px; margin-bottom: 20px; color: var(--accent2); }
+  .modal .row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .modal-actions { margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end; }
+
+  /* ── Timeline ───────────────────────────────────── */
+  .timeline { margin-top: 20px; }
+  .timeline-item {
+    display: flex; gap: 12px; padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .timeline-dot {
+    width: 10px; height: 10px; border-radius: 50%; margin-top: 4px; flex-shrink: 0;
+    background: var(--accent);
+  }
+  .timeline-meta { font-size: 12px; color: var(--muted); margin-top: 3px; }
+
+  /* ── Misc ───────────────────────────────────────── */
+  .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .section-header h2 { font-size: 17px; }
+  .loading { text-align: center; padding: 40px; color: var(--muted); }
+  .empty   { text-align: center; padding: 40px; color: var(--muted); font-size: 14px; }
+  .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+  .detail-item label { font-size: 11px; color: var(--muted); text-transform: uppercase; display: block; margin-bottom: 3px; }
+  .detail-item span  { font-size: 14px; }
+  hr { border: none; border-top: 1px solid var(--border); margin: 18px 0; }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════
+     LOGIN
+════════════════════════════════════════════════════════ -->
+<div id="login-screen">
+  <div class="login-box">
+    <h1>TMS Support Desk</h1>
+    <p>Sign in to your account</p>
+    <div class="form-group">
+      <label>Email</label>
+      <input type="email" id="login-email" placeholder="you@tms.com" autocomplete="username"/>
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password"/>
+    </div>
+    <button class="btn btn-primary btn-full" onclick="doLogin()">Sign In</button>
+    <div id="login-err" class="err-msg"></div>
+    <p style="margin-top:16px;font-size:12px;color:var(--muted);text-align:center">
+      Default: admin@tms.com / Admin@123
+    </p>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     APP
+════════════════════════════════════════════════════════ -->
+<div id="app">
+  <div class="topbar">
+    <div class="topbar-logo">🎫 TMS Support Desk</div>
+    <span class="topbar-user" id="topbar-user"></span>
+    <span class="topbar-role" id="topbar-role"></span>
+    <button class="btn btn-sm" style="background:var(--surface2);color:var(--text);" onclick="doLogout()">Logout</button>
+  </div>
+
+  <div class="nav">
+    <button class="nav-tab active" data-page="dashboard">Dashboard</button>
+    <button class="nav-tab" data-page="tickets">All Tickets</button>
+    <button class="nav-tab" data-page="new-ticket">Raise Ticket</button>
+    <button class="nav-tab" data-page="reports">Reports</button>
+    <button class="nav-tab admin-only" data-page="users" style="display:none">Users</button>
+  </div>
+
+  <div class="main">
+
+    <!-- ── Dashboard ─────────────────────────────── -->
+    <div class="page active" id="page-dashboard">
+      <div class="section-header">
+        <h2>Overview</h2>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-sm btn-primary" onclick="exportFile('excel')">⬇ Excel</button>
+          <button class="btn btn-sm" style="background:var(--surface2);color:var(--text)" onclick="exportFile('pdf')">⬇ PDF</button>
+          <button class="btn btn-sm btn-purple" onclick="downloadPPTX()">📊 Weekly PPTX</button>
+        </div>
+      </div>
+      <div class="stats-grid" id="stats-grid">
+        <div class="stat-card"><div class="num" id="s-total">—</div><div class="label">Total</div></div>
+        <div class="stat-card"><div class="num" style="color:var(--open)"    id="s-open">—</div><div class="label">Open</div></div>
+        <div class="stat-card"><div class="num" style="color:var(--inprogress)" id="s-inprog">—</div><div class="label">In Progress</div></div>
+        <div class="stat-card"><div class="num" style="color:var(--resolved)" id="s-resolved">—</div><div class="label">Resolved</div></div>
+        <div class="stat-card"><div class="num" style="color:var(--closed)"   id="s-closed">—</div><div class="label">Closed</div></div>
+        <div class="stat-card"><div class="num" style="color:var(--critical)" id="s-critical">—</div><div class="label">Critical</div></div>
+        <div class="stat-card"><div class="num" style="color:var(--sla-breach)" id="s-breached">—</div><div class="label">SLA Breached</div></div>
+      </div>
+
+      <div class="section-header" style="margin-top:8px">
+        <h2>Recent Tickets</h2>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Ticket ID</th><th>Broker</th><th>Category</th><th>Heading</th>
+                <th>Priority</th><th>Status</th><th>SLA</th><th>Raised At</th><th>Action</th></tr>
+          </thead>
+          <tbody id="dash-tbody"><tr><td colspan="9" class="loading">Loading…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── All Tickets ───────────────────────────── -->
+    <div class="page" id="page-tickets">
+      <div class="section-header">
+        <h2>All Tickets</h2>
+      </div>
+      <div class="filters">
+        <div class="fg">
+          <label>Broker</label>
+          <select id="f-broker"><option value="">All Brokers</option></select>
+        </div>
+        <div class="fg">
+          <label>Category</label>
+          <select id="f-category"><option value="">All Categories</option></select>
+        </div>
+        <div class="fg">
+          <label>Priority</label>
+          <select id="f-priority">
+            <option value="">All</option>
+            <option>critical</option><option>high</option>
+            <option>medium</option><option>low</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label>Status</label>
+          <select id="f-status">
+            <option value="">All</option>
+            <option value="open">Open</option>
+            <option value="inprogress">In Progress</option>
+            <option value="resolved">Resolved</option>
+            <option value="closed">Closed</option>
+            <option value="rejected">Rejected</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label>From</label>
+          <input type="date" id="f-from"/>
+        </div>
+        <div class="fg">
+          <label>To</label>
+          <input type="date" id="f-to"/>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="loadTickets()">Filter</button>
+        <button class="btn btn-sm" style="background:var(--surface2);color:var(--text)" onclick="clearFilters()">Clear</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Ticket ID</th><th>Broker</th><th>Category</th><th>Heading</th>
+                <th>Priority</th><th>Status</th><th>SLA</th><th>Raised At</th><th>Assigned To</th><th>Action</th></tr>
+          </thead>
+          <tbody id="tickets-tbody"><tr><td colspan="10" class="loading">Loading…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── Raise Ticket ──────────────────────────── -->
+    <div class="page" id="page-new-ticket">
+      <div class="section-header"><h2>Raise New Ticket</h2></div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:24px;max-width:720px">
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:4px">
+          <div class="form-group">
+            <label>Broker *</label>
+            <select id="nt-broker"><option value="">Select broker…</option></select>
+          </div>
+          <div class="form-group">
+            <label>Client Account ID</label>
+            <input type="text" id="nt-account" placeholder="Optional"/>
+          </div>
+          <div class="form-group">
+            <label>Category *</label>
+            <select id="nt-category" onchange="onCategoryChange()"><option value="">Select category…</option></select>
+          </div>
+          <div class="form-group">
+            <label>Sub Issue *</label>
+            <select id="nt-subissue"><option value="">Select category first…</option></select>
+          </div>
+          <div class="form-group">
+            <label>Priority *</label>
+            <select id="nt-priority">
+              <option value="">Select priority…</option>
+              <option value="low">Low</option>
+              <option value="medium">Medium</option>
+              <option value="high">High</option>
+              <option value="critical">Critical</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- ── Dynamic fields (shown based on category) ── -->
+        <div id="nt-dynamic-fields">
+          <h4>📋 Category Specific Details</h4>
+          <div class="dynamic-grid" id="nt-dynamic-grid"></div>
+        </div>
+
+        <div class="form-group">
+          <label>Heading *</label>
+          <input type="text" id="nt-heading" placeholder="Brief issue description (3–200 chars)"/>
+        </div>
+        <div class="form-group">
+          <label>Remarks *</label>
+          <textarea id="nt-remarks" rows="5" placeholder="Detailed description of the issue"></textarea>
+        </div>
+        <div id="nt-err" class="err-msg" style="text-align:left;margin-bottom:10px"></div>
+        <button class="btn btn-primary" onclick="raiseTicket()">Submit Ticket</button>
+      </div>
+    </div>
+
+    <!-- ── Reports ───────────────────────────────── -->
+    <div class="page" id="page-reports">
+      <div class="section-header">
+        <h2>Reports</h2>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-sm btn-primary" onclick="exportFile('excel')">⬇ Excel</button>
+          <button class="btn btn-sm" style="background:var(--surface2);color:var(--text)" onclick="exportFile('pdf')">⬇ PDF</button>
+          <button class="btn btn-sm btn-purple" onclick="downloadPPTX()">📊 Weekly PPTX Report</button>
+        </div>
+      </div>
+
+      <h3 style="margin-bottom:12px;font-size:15px">Broker Summary</h3>
+      <div class="table-wrap" style="margin-bottom:24px">
+        <table>
+          <thead>
+            <tr><th>Broker</th><th>Contact</th><th>Total</th><th>Open</th>
+                <th>In Progress</th><th>Resolved</th><th>Critical</th><th>SLA Breached</th><th>Avg Resolution</th></tr>
+          </thead>
+          <tbody id="broker-tbody"><tr><td colspan="9" class="loading">Loading…</td></tr></tbody>
+        </table>
+      </div>
+
+      <h3 style="margin-bottom:12px;font-size:15px">Category Summary</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Category</th><th>SLA Hours</th><th>Total</th><th>Open</th>
+                <th>Resolved</th><th>SLA Breached</th></tr>
+          </thead>
+          <tbody id="category-tbody"><tr><td colspan="6" class="loading">Loading…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── Users (admin) ─────────────────────────── -->
+    <div class="page" id="page-users">
+      <div class="section-header">
+        <h2>User Management</h2>
+        <button class="btn btn-primary btn-sm" onclick="openModal('modal-new-user')">+ Add User</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Name</th><th>Email</th><th>Role</th><th>Active</th><th>Created</th><th>Action</th></tr>
+          </thead>
+          <tbody id="users-tbody"><tr><td colspan="6" class="loading">Loading…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<!-- ══════════════════════════════════════════════════════
+     MODALS
+════════════════════════════════════════════════════════ -->
+
+<!-- Ticket Detail Modal -->
+<div class="modal-overlay" id="modal-ticket">
+  <div class="modal" style="width:min(780px,95vw)">
+    <h2 id="md-ticket-id">Ticket Detail</h2>
+    <div id="md-body">Loading…</div>
+    <div class="modal-actions">
+      <button class="btn btn-sm" style="background:var(--surface2);color:var(--text)" onclick="closeModal('modal-ticket')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- New User Modal -->
+<div class="modal-overlay" id="modal-new-user">
+  <div class="modal" style="width:420px">
+    <h2>Add New User</h2>
+    <div class="form-group"><label>Full Name *</label><input type="text" id="nu-name"/></div>
+    <div class="form-group"><label>Email *</label><input type="email" id="nu-email"/></div>
+    <div class="form-group"><label>Password *</label><input type="password" id="nu-pass" placeholder="Min 8 chars"/></div>
+    <div class="form-group">
+      <label>Role *</label>
+      <select id="nu-role">
+        <option value="support">Support</option>
+        <option value="technical">Technical</option>
+        <option value="admin">Admin</option>
+      </select>
+    </div>
+    <div id="nu-err" class="err-msg" style="text-align:left;margin-bottom:10px"></div>
+    <div class="modal-actions">
+      <button class="btn btn-sm" style="background:var(--surface2);color:var(--text)" onclick="closeModal('modal-new-user')">Cancel</button>
+      <button class="btn btn-primary btn-sm" onclick="createUser()">Create User</button>
+    </div>
+  </div>
+</div>
+
+<!-- Status Update Modal -->
+<div class="modal-overlay" id="modal-status">
+  <div class="modal" style="width:420px">
+    <h2>Update Ticket Status</h2>
+    <input type="hidden" id="su-ticket-id"/>
+    <div class="form-group">
+      <label>New Status *</label>
+      <select id="su-status">
+        <option value="open">Open</option>
+        <option value="inprogress">In Progress</option>
+        <option value="resolved">Resolved</option>
+        <option value="closed">Closed</option>
+      </select>
+    </div>
+    <div class="form-group"><label>Note</label><textarea id="su-note" rows="3"></textarea></div>
+    <div class="form-group">
+      <label>Resolution Notes</label>
+      <textarea id="su-resolution" rows="3" placeholder="Required when resolving/closing"></textarea>
+    </div>
+    <div id="su-err" class="err-msg" style="text-align:left;margin-bottom:10px"></div>
+    <div class="modal-actions">
+      <button class="btn btn-sm" style="background:var(--surface2);color:var(--text)" onclick="closeModal('modal-status')">Cancel</button>
+      <button class="btn btn-primary btn-sm" onclick="submitStatusUpdate()">Update</button>
+    </div>
+  </div>
+</div>
+
+<!-- Reject Ticket Modal -->
+<div class="modal-overlay" id="modal-reject">
+  <div class="modal" style="width:420px">
+    <h2 style="color:var(--critical)">Reject Ticket</h2>
+    <input type="hidden" id="rj-ticket-id"/>
+    <div class="form-group">
+      <label>Rejection Reason * (min 10 chars)</label>
+      <textarea id="rj-reason" rows="4" placeholder="Explain why this ticket is being rejected…"></textarea>
+    </div>
+    <div id="rj-err" class="err-msg" style="text-align:left;margin-bottom:10px"></div>
+    <div class="modal-actions">
+      <button class="btn btn-sm" style="background:var(--surface2);color:var(--text)" onclick="closeModal('modal-reject')">Cancel</button>
+      <button class="btn btn-danger btn-sm" onclick="submitReject()">Reject Ticket</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ────────────────────────────────────────────────────────
+// State & helpers
+// ────────────────────────────────────────────────────────
+let token = localStorage.getItem('tms_token');
+let me    = JSON.parse(localStorage.getItem('tms_user') || 'null');
+let allSubIssues  = [];
+let allCategories = [];
+
+// Category dynamic fields definition (mirrors backend)
+const CATEGORY_FIELDS = {
+  'kyc issue':        [{key:'ClientID',label:'Client ID',required:true},{key:'BOID',label:'BOID',required:true}],
+  'dp issue':         [{key:'ClientCode',label:'Client Code',required:true},{key:'BOID',label:'BOID',required:true},{key:'Script',label:'Script',required:true},{key:'Quantity',label:'Quantity',required:true}],
+  'order issue':      [{key:'Exchange',label:'Exchange',required:true},{key:'OrderID',label:'Order ID',required:true},{key:'BrokerNum',label:'Broker Number',required:true},{key:'Script',label:'Script',required:true},{key:'Quantity',label:'Quantity',required:true}],
+  'collateral issue': [{key:'CollateralAmount',label:'Collateral Amount to Release',required:true},{key:'ClientCode',label:'Client Code',required:true},{key:'Script',label:'Script / Security',required:false}],
+  'payment pending':  [{key:'ClientCode',label:'Client Code',required:true},{key:'Amount',label:'Amount',required:true},{key:'BankRef',label:'Bank Reference',required:false}],
+  'deactivation':     [{key:'ClientCode',label:'Client Code',required:true},{key:'BOID',label:'BOID',required:false}],
+};
+
+const API = '/api';
+
+async function api(path, opts = {}) {
+  const res = await fetch(API + path, {
+    ...opts,
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+      ...(opts.headers || {})
+    },
+    body: opts.body ? JSON.stringify(opts.body) : undefined
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+  return data;
+}
+
+function fmt(dt) {
+  if (!dt) return '—';
+  return new Date(dt).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' });
+}
+function fmtMins(m) {
+  if (m == null) return '—';
+  const h = Math.floor(Math.abs(m) / 60);
+  const min = Math.abs(m) % 60;
+  return (m < 0 ? '-' : '') + (h ? `${h}h ` : '') + `${min}m`;
+}
+function badge(cls, text) {
+  const key = (text || '').toLowerCase().replace(/\s/g,'');
+  return `<span class="badge badge-${key}">${text || '—'}</span>`;
+}
+function openModal(id)  { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+// ────────────────────────────────────────────────────────
+// Login / Logout
+// ────────────────────────────────────────────────────────
+async function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const pass  = document.getElementById('login-pass').value;
+  document.getElementById('login-err').textContent = '';
+  try {
+    const data = await api('/auth/login', { method: 'POST', body: { email, password: pass } });
+    token = data.token;
+    me    = data.user;
+    localStorage.setItem('tms_token', token);
+    localStorage.setItem('tms_user',  JSON.stringify(me));
+    initApp();
+  } catch(e) {
+    document.getElementById('login-err').textContent = e.message;
+  }
+}
+document.getElementById('login-pass').addEventListener('keydown', e => { if (e.key==='Enter') doLogin(); });
+
+function doLogout() {
+  localStorage.removeItem('tms_token');
+  localStorage.removeItem('tms_user');
+  location.reload();
+}
+
+// ────────────────────────────────────────────────────────
+// App init
+// ────────────────────────────────────────────────────────
+function initApp() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  document.getElementById('topbar-user').textContent = me.name;
+  document.getElementById('topbar-role').textContent = me.role;
+
+  if (me.role === 'admin') {
+    document.querySelectorAll('.admin-only').forEach(el => el.style.display = '');
+  }
+
+  document.querySelectorAll('.nav-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      tab.classList.add('active');
+      document.getElementById('page-' + tab.dataset.page).classList.add('active');
+      onPageChange(tab.dataset.page);
+    });
+  });
+
+  loadMeta();
+  loadDashboard();
+}
+
+function onPageChange(page) {
+  if (page === 'dashboard') loadDashboard();
+  if (page === 'tickets')   loadTickets();
+  if (page === 'reports')   loadReports();
+  if (page === 'users')     loadUsers();
+}
+
+// ────────────────────────────────────────────────────────
+// Meta (brokers, categories, subissues)
+// ────────────────────────────────────────────────────────
+async function loadMeta() {
+  try {
+    const [brokers, cats] = await Promise.all([
+      api('/brokers'),
+      api('/categories')
+    ]);
+    allCategories = cats.categories;
+    allSubIssues  = cats.subIssues;
+
+    ['f-broker', 'nt-broker'].forEach(id => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const keep = el.innerHTML.split('</option>')[0] + '</option>';
+      el.innerHTML = keep + brokers.map(b =>
+        `<option value="${b.BrokerID}">${b.BrokerName}</option>`).join('');
+    });
+
+    const ntCat = document.getElementById('nt-category');
+    ntCat.innerHTML = '<option value="">Select category…</option>' +
+      allCategories.map(c => `<option value="${c.CategoryID}" data-name="${c.CategoryName}">${c.CategoryName}</option>`).join('');
+
+    const fCat = document.getElementById('f-category');
+    fCat.innerHTML = '<option value="">All Categories</option>' +
+      allCategories.map(c => `<option value="${c.CategoryID}">${c.CategoryName}</option>`).join('');
+
+  } catch(e) { console.error('loadMeta error:', e); }
+}
+
+// ────────────────────────────────────────────────────────
+// Category change → SubIssues + Dynamic Fields
+// ────────────────────────────────────────────────────────
+function onCategoryChange() {
+  const sel    = document.getElementById('nt-category');
+  const catID  = +sel.value;
+  const catName = sel.options[sel.selectedIndex]?.dataset.name || '';
+
+  // SubIssues
+  const subs = allSubIssues.filter(s => s.CategoryID === catID);
+  const el   = document.getElementById('nt-subissue');
+  el.innerHTML = subs.length
+    ? '<option value="">Select sub-issue…</option>' + subs.map(s =>
+        `<option value="${s.SubIssueID}">${s.SubIssueName}</option>`).join('')
+    : '<option value="">No sub-issues found</option>';
+
+  // Dynamic fields
+  const fields    = CATEGORY_FIELDS[catName.toLowerCase()] || [];
+  const container = document.getElementById('nt-dynamic-fields');
+  const grid      = document.getElementById('nt-dynamic-grid');
+
+  if (fields.length === 0) {
+    container.style.display = 'none';
+    grid.innerHTML = '';
+    return;
+  }
+
+  container.style.display = 'block';
+  grid.innerHTML = fields.map(f => `
+    <div class="form-group" style="margin-bottom:0">
+      <label>${f.label}${f.required ? ' *' : ''}</label>
+      <input type="text" id="df-${f.key}" placeholder="${f.label}" data-key="${f.key}" data-required="${f.required}"/>
+    </div>
+  `).join('');
+}
+
+// ────────────────────────────────────────────────────────
+// Dashboard
+// ────────────────────────────────────────────────────────
+async function loadDashboard() {
+  try {
+    const [overview, tickets] = await Promise.all([
+      api('/reports/overview'),
+      api('/tickets')
+    ]);
+    document.getElementById('s-total').textContent    = overview.TotalTickets ?? 0;
+    document.getElementById('s-open').textContent     = overview.OpenTickets  ?? 0;
+    document.getElementById('s-inprog').textContent   = overview.InProgress   ?? 0;
+    document.getElementById('s-resolved').textContent = overview.Resolved     ?? 0;
+    document.getElementById('s-closed').textContent   = overview.Closed       ?? 0;
+    document.getElementById('s-critical').textContent = overview.Critical     ?? 0;
+    document.getElementById('s-breached').textContent = overview.SLABreached  ?? 0;
+
+    const recent = tickets.slice(0, 15);
+    document.getElementById('dash-tbody').innerHTML = recent.length
+      ? recent.map(t => ticketRow(t, 9)).join('')
+      : `<tr><td colspan="9" class="empty">No tickets found</td></tr>`;
+  } catch(e) {
+    document.getElementById('dash-tbody').innerHTML = `<tr><td colspan="9" class="empty">Error: ${e.message}</td></tr>`;
+  }
+}
+
+function ticketRow(t, cols) {
+  const sla = t.SLAStatus || (t.SLABreached ? 'BREACHED' : 'OK');
+  return `<tr>
+    <td><code style="color:var(--accent2)">${t.TicketID}</code></td>
+    <td>${t.BrokerName || '—'}</td>
+    <td>${t.CategoryName || '—'}</td>
+    <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${t.Heading}">${t.Heading}</td>
+    <td>${badge('', t.Priority)}</td>
+    <td>${badge('', t.Status)}</td>
+    <td>${badge('', sla)}</td>
+    <td style="white-space:nowrap">${fmt(t.RaisedAt)}</td>
+    ${cols === 10 ? `<td>${t.AssignedTo || '—'}</td>` : ''}
+    <td><button class="btn btn-sm btn-primary" onclick="viewTicket('${t.TicketID}')">View</button></td>
+  </tr>`;
+}
+
+// ────────────────────────────────────────────────────────
+// All Tickets
+// ────────────────────────────────────────────────────────
+async function loadTickets() {
+  const params = new URLSearchParams();
+  const broker   = document.getElementById('f-broker').value;
+  const category = document.getElementById('f-category').value;
+  const priority = document.getElementById('f-priority').value;
+  const status   = document.getElementById('f-status').value;
+  const from     = document.getElementById('f-from').value;
+  const to       = document.getElementById('f-to').value;
+  if (broker)   params.set('brokerID',   broker);
+  if (category) params.set('categoryID', category);
+  if (priority) params.set('priority',   priority);
+  if (status)   params.set('status',     status);
+  if (from)     params.set('dateFrom',   from);
+  if (to)       params.set('dateTo',     to);
+
+  document.getElementById('tickets-tbody').innerHTML = `<tr><td colspan="10" class="loading">Loading…</td></tr>`;
+  try {
+    const tickets = await api('/tickets?' + params);
+    document.getElementById('tickets-tbody').innerHTML = tickets.length
+      ? tickets.map(t => ticketRow(t, 10)).join('')
+      : `<tr><td colspan="10" class="empty">No tickets match the filters</td></tr>`;
+  } catch(e) {
+    document.getElementById('tickets-tbody').innerHTML = `<tr><td colspan="10" class="empty">Error: ${e.message}</td></tr>`;
+  }
+}
+
+function clearFilters() {
+  ['f-broker','f-category','f-priority','f-status'].forEach(id => document.getElementById(id).value = '');
+  ['f-from','f-to'].forEach(id => document.getElementById(id).value = '');
+  loadTickets();
+}
+
+// ────────────────────────────────────────────────────────
+// View Ticket
+// ────────────────────────────────────────────────────────
+async function viewTicket(id) {
+  document.getElementById('md-ticket-id').textContent = id;
+  document.getElementById('md-body').innerHTML = '<div class="loading">Loading…</div>';
+  openModal('modal-ticket');
+  try {
+    const t = await api('/tickets/' + id);
+    const sla = t.SLAStatus || (t.SLABreached ? 'BREACHED' : 'OK');
+    let html = `
+      <div class="detail-grid">
+        <div class="detail-item"><label>Broker</label><span>${t.BrokerName || '—'} (${t.BrokerEmail || '—'})</span></div>
+        <div class="detail-item"><label>Client Account</label><span>${t.ClientAccountID || '—'}</span></div>
+        <div class="detail-item"><label>Category</label><span>${t.CategoryName} (SLA: ${t.SLAHours}h)</span></div>
+        <div class="detail-item"><label>Sub Issue</label><span>${t.SubIssueName || '—'}</span></div>
+        <div class="detail-item"><label>Priority</label><span>${badge('',t.Priority)}</span></div>
+        <div class="detail-item"><label>Status</label><span>${badge('',t.Status)}</span></div>
+        <div class="detail-item"><label>SLA Status</label><span>${badge('',sla)}</span></div>
+        <div class="detail-item"><label>SLA Deadline</label><span>${fmt(t.SLADeadline)}</span></div>
+        <div class="detail-item"><label>Raised By</label><span>${t.RaisedBy || '—'}</span></div>
+        <div class="detail-item"><label>Raised At</label><span>${fmt(t.RaisedAt)}</span></div>
+        <div class="detail-item"><label>Assigned To</label><span>${t.AssignedTo || 'Unassigned'}</span></div>
+        <div class="detail-item"><label>Last Updated</label><span>${fmt(t.LastUpdatedAt)}</span></div>
+      </div>`;
+
+    // Dynamic fields
+    if (t.dynamicFields && t.dynamicFields.length > 0) {
+      html += `<div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:14px">
+        <div style="font-size:11px;color:var(--accent2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">📋 Category Details</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        ${t.dynamicFields.map(f => `
+          <div><label style="font-size:11px;color:var(--muted);text-transform:uppercase;display:block;margin-bottom:3px">${f.FieldName}</label>
+          <span style="font-size:14px;font-weight:600">${f.FieldValue || '—'}</span></div>
+        `).join('')}
+        </div></div>`;
+    }
+
+    html += `
+      <div style="margin-bottom:12px"><label style="font-size:11px;color:var(--muted);text-transform:uppercase">Heading</label>
+        <p style="margin-top:4px;font-weight:600">${t.Heading}</p></div>
+      <div style="margin-bottom:12px"><label style="font-size:11px;color:var(--muted);text-transform:uppercase">Remarks</label>
+        <p style="margin-top:4px;white-space:pre-wrap;font-size:13px">${t.Remarks || '—'}</p></div>`;
+
+    if (t.ResolutionNotes) {
+      html += `<div style="margin-bottom:12px"><label style="font-size:11px;color:var(--muted);text-transform:uppercase">Resolution Notes</label>
+        <p style="margin-top:4px;white-space:pre-wrap;font-size:13px">${t.ResolutionNotes}</p></div>`;
+    }
+
+    if (t.IsRejected || t.Status === 'rejected') {
+      html += `<div style="background:#f05c6e22;border:1px solid var(--critical);border-radius:8px;padding:12px;margin-bottom:14px">
+        <div style="font-size:11px;color:var(--critical);text-transform:uppercase;margin-bottom:6px">🚫 Rejected by: ${t.RejectedByName || '—'}</div>
+        <p style="font-size:13px">${t.RejectionReason || '—'}</p>
+      </div>`;
+    }
+
+    // Action buttons
+    if (t.Status !== 'closed' && t.Status !== 'rejected') {
+      html += `<div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+        <button class="btn btn-sm btn-primary" onclick="openStatusModal('${t.TicketID}','${t.Status}')">Update Status</button>`;
+      if (me.role !== 'support') {
+        html += `<button class="btn btn-sm btn-warning" onclick="openAssignModal('${t.TicketID}')">Assign Agent</button>
+                 <button class="btn btn-sm btn-danger" onclick="openRejectModal('${t.TicketID}')">Reject</button>`;
+      }
+      html += `</div>`;
+    }
+
+    // Timeline
+    html += `<hr><div class="timeline"><h3 style="font-size:14px;margin-bottom:10px">Timeline</h3>`;
+    if (t.timeline && t.timeline.length) {
+      html += t.timeline.map(tl => `
+        <div class="timeline-item">
+          <div class="timeline-dot"></div>
+          <div>
+            <div style="font-size:13px;font-weight:600;text-transform:capitalize">${tl.ActionType}</div>
+            <div style="font-size:13px;margin-top:2px">${tl.ActionNote || ''}</div>
+            <div class="timeline-meta">${tl.ActionByName || '—'} · ${fmt(tl.ActionAt)}</div>
+          </div>
+        </div>`).join('');
+    } else {
+      html += `<p class="empty" style="padding:16px">No timeline entries</p>`;
+    }
+    html += `</div>`;
+
+    document.getElementById('md-body').innerHTML = html;
+  } catch(e) {
+    document.getElementById('md-body').innerHTML = `<p class="empty">Error: ${e.message}</p>`;
+  }
+}
+
+// ────────────────────────────────────────────────────────
+// Status Update
+// ────────────────────────────────────────────────────────
+function openStatusModal(ticketID, currentStatus) {
+  closeModal('modal-ticket');
+  document.getElementById('su-ticket-id').value  = ticketID;
+  document.getElementById('su-status').value     = currentStatus;
+  document.getElementById('su-note').value       = '';
+  document.getElementById('su-resolution').value = '';
+  document.getElementById('su-err').textContent  = '';
+  openModal('modal-status');
+}
+
+async function submitStatusUpdate() {
+  const id         = document.getElementById('su-ticket-id').value;
+  const status     = document.getElementById('su-status').value;
+  const note       = document.getElementById('su-note').value;
+  const resolution = document.getElementById('su-resolution').value;
+  document.getElementById('su-err').textContent = '';
+  try {
+    await api(`/tickets/${id}/status`, {
+      method: 'PATCH',
+      body: { status, note, resolutionNotes: resolution }
+    });
+    closeModal('modal-status');
+    alert('Status updated successfully!');
+    loadDashboard();
+  } catch(e) {
+    document.getElementById('su-err').textContent = e.message;
+  }
+}
+
+// ────────────────────────────────────────────────────────
+// Reject Ticket
+// ────────────────────────────────────────────────────────
+function openRejectModal(ticketID) {
+  closeModal('modal-ticket');
+  document.getElementById('rj-ticket-id').value  = ticketID;
+  document.getElementById('rj-reason').value     = '';
+  document.getElementById('rj-err').textContent  = '';
+  openModal('modal-reject');
+}
+
+async function submitReject() {
+  const id     = document.getElementById('rj-ticket-id').value;
+  const reason = document.getElementById('rj-reason').value.trim();
+  document.getElementById('rj-err').textContent = '';
+  if (reason.length < 10) {
+    document.getElementById('rj-err').textContent = 'Reason must be at least 10 characters.';
+    return;
+  }
+  try {
+    await api(`/tickets/${id}/reject`, { method: 'POST', body: { reason } });
+    closeModal('modal-reject');
+    alert('Ticket rejected successfully.');
+    loadDashboard();
+  } catch(e) {
+    document.getElementById('rj-err').textContent = e.message;
+  }
+}
+
+// ────────────────────────────────────────────────────────
+// Assign Agent
+// ────────────────────────────────────────────────────────
+async function openAssignModal(ticketID) {
+  try {
+    const agents = await api('/users/agents');
+    const choice = prompt(
+      'Assign to agent:\n' + agents.map((a, i) => `${i+1}. ${a.FullName} (${a.Role})`).join('\n') +
+      '\n\nEnter number:'
+    );
+    const idx = parseInt(choice) - 1;
+    if (isNaN(idx) || idx < 0 || idx >= agents.length) return;
+    await api(`/tickets/${ticketID}/assign`, {
+      method: 'PATCH', body: { assignedToUserID: agents[idx].UserID }
+    });
+    alert('Ticket assigned to ' + agents[idx].FullName);
+    viewTicket(ticketID);
+  } catch(e) { alert('Error: ' + e.message); }
+}
+
+// ────────────────────────────────────────────────────────
+// Raise Ticket (with dynamic fields)
+// ────────────────────────────────────────────────────────
+async function raiseTicket() {
+  const brokerID   = document.getElementById('nt-broker').value;
+  const categoryEl = document.getElementById('nt-category');
+  const categoryID = categoryEl.value;
+  const categoryName = categoryEl.options[categoryEl.selectedIndex]?.dataset.name || '';
+  const subIssueID = document.getElementById('nt-subissue').value;
+  const priority   = document.getElementById('nt-priority').value;
+  const heading    = document.getElementById('nt-heading').value.trim();
+  const remarks    = document.getElementById('nt-remarks').value.trim();
+  const account    = document.getElementById('nt-account').value.trim();
+  document.getElementById('nt-err').textContent = '';
+
+  if (!brokerID || !categoryID || !subIssueID || !priority || !heading || !remarks) {
+    document.getElementById('nt-err').textContent = 'All fields marked * are required.';
+    return;
+  }
+
+  // Collect dynamic fields
+  const dynamicFields = {};
+  const fieldDefs = CATEGORY_FIELDS[categoryName.toLowerCase()] || [];
+  for (const fd of fieldDefs) {
+    const el = document.getElementById('df-' + fd.key);
+    if (!el) continue;
+    const val = el.value.trim();
+    if (fd.required && !val) {
+      document.getElementById('nt-err').textContent = `${fd.label} is required for ${categoryName} tickets.`;
+      el.focus();
+      return;
+    }
+    if (val) dynamicFields[fd.key] = val;
+  }
+
+  try {
+    const res = await api('/tickets', {
+      method: 'POST',
+      body: { brokerID, categoryID, subIssueID, priority, heading, remarks,
+              clientAccountID: account || null, categoryName, dynamicFields }
+    });
+    alert(`Ticket ${res.ticketID} raised successfully!`);
+
+    // Reset form
+    ['nt-broker','nt-category','nt-subissue','nt-priority'].forEach(id => document.getElementById(id).value = '');
+    ['nt-heading','nt-remarks','nt-account'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('nt-subissue').innerHTML = '<option value="">Select category first…</option>';
+    document.getElementById('nt-dynamic-fields').style.display = 'none';
+    document.getElementById('nt-dynamic-grid').innerHTML = '';
+
+    // Switch to All Tickets tab
+    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelector('[data-page="tickets"]').classList.add('active');
+    document.getElementById('page-tickets').classList.add('active');
+    loadTickets();
+  } catch(e) {
+    document.getElementById('nt-err').textContent = e.message;
+  }
+}
+
+// ────────────────────────────────────────────────────────
+// Reports
+// ────────────────────────────────────────────────────────
+async function loadReports() {
+  try {
+    const [brokers, cats] = await Promise.all([
+      api('/reports/broker-summary'),
+      api('/categories')
+    ]);
+
+    document.getElementById('broker-tbody').innerHTML = brokers.length
+      ? brokers.map(b => `<tr>
+          <td>${b.BrokerName}</td>
+          <td>${b.ContactPerson || '—'}</td>
+          <td><strong>${b.TotalTickets}</strong></td>
+          <td style="color:var(--open)">${b.OpenTickets}</td>
+          <td style="color:var(--inprogress)">${b.InProgress}</td>
+          <td style="color:var(--resolved)">${b.Resolved}</td>
+          <td style="color:var(--critical)">${b.CriticalTickets}</td>
+          <td style="color:var(--sla-breach)">${b.SLABreached}</td>
+          <td>${b.AvgResolutionMinutes != null ? fmtMins(b.AvgResolutionMinutes) : '—'}</td>
+        </tr>`).join('')
+      : `<tr><td colspan="9" class="empty">No data</td></tr>`;
+
+    const categories = cats.categories || [];
+    document.getElementById('category-tbody').innerHTML = categories.length
+      ? categories.map(c => `<tr>
+          <td>${c.CategoryName}</td>
+          <td>${c.SLAHours}h</td>
+          <td>—</td><td>—</td><td>—</td><td>—</td>
+        </tr>`).join('')
+      : `<tr><td colspan="6" class="empty">No data</td></tr>`;
+  } catch(e) {
+    console.error('loadReports error:', e);
+  }
+}
+
+// ────────────────────────────────────────────────────────
+// Download PPTX
+// ────────────────────────────────────────────────────────
+async function downloadPPTX() {
+  const btn = event.target;
+  btn.textContent = '⏳ Generating…';
+  btn.disabled = true;
+  try {
+    const res = await fetch('/api/pptx/weekly', {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || 'Failed to generate PPTX');
+    }
+    const blob = await res.blob();
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = `TMS_Weekly_Report_${new Date().toISOString().split('T')[0]}.pptx`;
+    a.click();
+    URL.revokeObjectURL(url);
+  } catch(e) {
+    alert('PPTX Error: ' + e.message);
+  } finally {
+    btn.textContent = '📊 Weekly PPTX';
+    btn.disabled = false;
+  }
+}
+
+// ────────────────────────────────────────────────────────
+// Users
+// ────────────────────────────────────────────────────────
+async function loadUsers() {
+  try {
+    const users = await api('/users');
+    document.getElementById('users-tbody').innerHTML = users.length
+      ? users.map(u => `<tr>
+          <td>${u.FullName}</td>
+          <td>${u.Email}</td>
+          <td><span class="badge badge-${u.Role}">${u.Role}</span></td>
+          <td style="color:${u.IsActive ? 'var(--low)':'var(--critical)'}">${u.IsActive ? 'Active' : 'Inactive'}</td>
+          <td>${new Date(u.CreatedAt).toLocaleDateString('en-IN')}</td>
+          <td><button class="btn btn-sm btn-warning" onclick="toggleUser(${u.UserID})">${u.IsActive ? 'Deactivate':'Activate'}</button></td>
+        </tr>`).join('')
+      : `<tr><td colspan="6" class="empty">No users</td></tr>`;
+  } catch(e) {
+    document.getElementById('users-tbody').innerHTML = `<tr><td colspan="6" class="empty">Error: ${e.message}</td></tr>`;
+  }
+}
+
+async function createUser() {
+  const fullName = document.getElementById('nu-name').value.trim();
+  const email    = document.getElementById('nu-email').value.trim();
+  const password = document.getElementById('nu-pass').value;
+  const role     = document.getElementById('nu-role').value;
+  document.getElementById('nu-err').textContent = '';
+  try {
+    await api('/users', { method: 'POST', body: { fullName, email, password, role } });
+    closeModal('modal-new-user');
+    ['nu-name','nu-email','nu-pass'].forEach(id => document.getElementById(id).value = '');
+    loadUsers();
+  } catch(e) {
+    document.getElementById('nu-err').textContent = e.message;
+  }
+}
+
+async function toggleUser(id) {
+  try {
+    await api(`/users/${id}/toggle`, { method: 'PATCH' });
+    loadUsers();
+  } catch(e) { alert('Error: ' + e.message); }
+}
+
+// ────────────────────────────────────────────────────────
+// Export Excel / PDF
+// ────────────────────────────────────────────────────────
+function exportFile(type) {
+  fetch(`/api/export/${type}`, { headers: { Authorization: `Bearer ${token}` } })
+    .then(r => r.blob())
+    .then(blob => {
+      const url = URL.createObjectURL(blob);
+      const a   = document.createElement('a');
+      a.href     = url;
+      a.download = type === 'excel' ? 'tickets.xlsx' : 'tickets.pdf';
+      a.click();
+      URL.revokeObjectURL(url);
+    })
+    .catch(e => alert('Export failed: ' + e.message));
+}
+
+// ────────────────────────────────────────────────────────
+// Close modals on overlay click
+// ────────────────────────────────────────────────────────
+document.querySelectorAll('.modal-overlay').forEach(el => {
+  el.addEventListener('click', e => { if (e.target === el) el.classList.remove('open'); });
+});
+
+// ────────────────────────────────────────────────────────
+// Auto-init if token exists
+// ────────────────────────────────────────────────────────
+if (token && me) {
+  initApp();
+}
+</script>
+</body>
+</html>
