@@ -4,191 +4,513 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>TMS Support Desk</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
 <style>
-  :root {
-    --bg:        #0d1117;
-    --surface:   #161b22;
-    --surface2:  #1e2330;
-    --border:    #30363d;
-    --accent:    #5e72eb;
-    --accent2:   #7c8ff5;
-    --text:      #e6edf3;
-    --muted:     #8b949e;
-    --critical:  #f05c6e;
-    --high:      #f5a623;
-    --medium:    #f5d020;
-    --low:       #22d3a0;
-    --open:      #5e72eb;
-    --inprogress:#f5a623;
-    --resolved:  #22d3a0;
-    --closed:    #8b949e;
-    --sla-ok:    #22d3a0;
-    --sla-warn:  #f5a623;
-    --sla-breach:#f05c6e;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-         background: var(--bg); color: var(--text); min-height: 100vh; }
+:root {
+  --bg:         #0a0c10;
+  --panel:      #0f1318;
+  --card:       #141922;
+  --card2:      #1a2130;
+  --border:     #1e2a38;
+  --border2:    #253040;
+  --accent:     #3b82f6;
+  --accent2:    #60a5fa;
+  --accent-glow:rgba(59,130,246,0.15);
+  --text:       #e2e8f0;
+  --muted:      #64748b;
+  --muted2:     #94a3b8;
+  --critical:   #ef4444;
+  --high:       #f97316;
+  --medium:     #eab308;
+  --low:        #22c55e;
+  --open:       #3b82f6;
+  --inprogress: #a855f7;
+  --resolved:   #22c55e;
+  --closed:     #64748b;
+  --sla-ok:     #22c55e;
+  --sla-warn:   #f97316;
+  --sla-breach: #ef4444;
+  --sidebar-w:  220px;
+  --topbar-h:   56px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 14px; }
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
 
-  /* ── Login ─────────────────────────────────────── */
-  #login-screen {
-    display: flex; align-items: center; justify-content: center;
-    min-height: 100vh; background: var(--bg);
-  }
-  .login-box {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: 12px; padding: 40px; width: 380px;
-    box-shadow: 0 8px 32px rgba(0,0,0,.5);
-  }
-  .login-box h1 { font-size: 22px; margin-bottom: 6px; color: var(--accent2); }
-  .login-box p  { color: var(--muted); font-size: 13px; margin-bottom: 28px; }
-  .form-group   { margin-bottom: 18px; }
-  .form-group label { display: block; font-size: 12px; color: var(--muted);
-                      text-transform: uppercase; letter-spacing: .5px; margin-bottom: 6px; }
-  input, select, textarea {
-    width: 100%; padding: 9px 12px; background: var(--surface2);
-    border: 1px solid var(--border); border-radius: 6px;
-    color: var(--text); font-size: 14px; outline: none; transition: border .2s;
-  }
-  input:focus, select:focus, textarea:focus { border-color: var(--accent); }
-  textarea { resize: vertical; min-height: 80px; }
-  .btn {
-    padding: 9px 18px; border: none; border-radius: 6px; font-size: 14px;
-    cursor: pointer; font-weight: 600; transition: opacity .2s;
-  }
-  .btn:hover { opacity: .85; }
-  .btn-primary  { background: var(--accent);  color: #fff; }
-  .btn-success  { background: var(--low);     color: #000; }
-  .btn-danger   { background: var(--critical);color: #fff; }
-  .btn-warning  { background: var(--high);    color: #000; }
-  .btn-purple   { background: #7c3aed;        color: #fff; }
-  .btn-sm { padding: 5px 11px; font-size: 12px; }
-  .btn-full { width: 100%; }
-  .err-msg { color: var(--critical); font-size: 13px; margin-top: 10px; text-align: center; }
+/* ── Scrollbar ──────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
 
-  /* ── App shell ──────────────────────────────────── */
-  #app { display: none; }
-  .topbar {
-    height: 54px; background: var(--surface); border-bottom: 1px solid var(--border);
-    display: flex; align-items: center; padding: 0 20px; gap: 16px; position: sticky; top: 0; z-index: 100;
-  }
-  .topbar-logo { font-weight: 700; font-size: 16px; color: var(--accent2); flex: 1; }
-  .topbar-user { font-size: 13px; color: var(--muted); }
-  .topbar-role {
-    font-size: 11px; padding: 2px 8px; border-radius: 20px;
-    background: var(--accent); color: #fff; text-transform: uppercase;
-  }
+/* ══════════════════════════════════════════════════════════
+   LOGIN
+══════════════════════════════════════════════════════════ */
+#login-screen {
+  display: flex; align-items: center; justify-content: center;
+  min-height: 100vh;
+  background: radial-gradient(ellipse 80% 60% at 50% -10%, rgba(59,130,246,.12), transparent);
+}
+.login-wrap {
+  width: 400px;
+  animation: fadeUp .4s ease both;
+}
+.login-logo {
+  text-align: center; margin-bottom: 32px;
+}
+.login-logo .logo-icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 52px; height: 52px; border-radius: 14px;
+  background: linear-gradient(135deg, var(--accent), #818cf8);
+  font-size: 24px; margin-bottom: 12px;
+  box-shadow: 0 8px 32px rgba(59,130,246,.3);
+}
+.login-logo h1 { font-size: 20px; font-weight: 700; color: var(--text); }
+.login-logo p  { font-size: 13px; color: var(--muted); margin-top: 4px; }
+.login-box {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 32px;
+  box-shadow: 0 24px 64px rgba(0,0,0,.5);
+}
+.form-group { margin-bottom: 18px; }
+.form-group label {
+  display: block; font-size: 11px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: .7px;
+  color: var(--muted2); margin-bottom: 7px;
+}
+input, select, textarea {
+  width: 100%; padding: 10px 14px;
+  background: var(--panel);
+  border: 1px solid var(--border2);
+  border-radius: 8px;
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  outline: none;
+  transition: border-color .15s, box-shadow .15s;
+}
+input:focus, select:focus, textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+select { cursor: pointer; }
+textarea { resize: vertical; min-height: 88px; line-height: 1.6; }
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 9px 18px; border: none; border-radius: 8px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px; font-weight: 600;
+  cursor: pointer; transition: all .15s; white-space: nowrap;
+}
+.btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
+.btn:active { transform: translateY(0); }
+.btn-primary { background: var(--accent); color: #fff; box-shadow: 0 4px 12px rgba(59,130,246,.3); }
+.btn-success { background: var(--low); color: #000; }
+.btn-danger  { background: var(--critical); color: #fff; }
+.btn-warning { background: var(--high); color: #000; }
+.btn-purple  { background: #7c3aed; color: #fff; }
+.btn-ghost   { background: var(--card2); color: var(--muted2); border: 1px solid var(--border2); }
+.btn-ghost:hover { color: var(--text); }
+.btn-sm { padding: 6px 12px; font-size: 12px; border-radius: 6px; }
+.btn-full { width: 100%; justify-content: center; padding: 11px; }
+.err-msg { color: var(--critical); font-size: 12px; margin-top: 10px; text-align: center; }
+.hint { color: var(--muted); font-size: 12px; text-align: center; margin-top: 14px; }
 
-  /* ── Nav tabs ───────────────────────────────────── */
-  .nav { display: flex; padding: 0 20px; background: var(--surface);
-         border-bottom: 1px solid var(--border); gap: 4px; }
-  .nav-tab {
-    padding: 10px 16px; font-size: 13px; cursor: pointer; border: none;
-    background: none; color: var(--muted); border-bottom: 2px solid transparent;
-    transition: all .2s;
-  }
-  .nav-tab:hover   { color: var(--text); }
-  .nav-tab.active  { color: var(--accent2); border-bottom-color: var(--accent); }
+/* ══════════════════════════════════════════════════════════
+   APP SHELL
+══════════════════════════════════════════════════════════ */
+#app { display: none; height: 100vh; overflow: hidden; }
 
-  /* ── Main content ───────────────────────────────── */
-  .main { padding: 24px 20px; }
-  .page { display: none; }
-  .page.active { display: block; }
+/* ── Topbar ─────────────────────────────────────────────── */
+.topbar {
+  position: fixed; top: 0; left: 0; right: 0;
+  height: var(--topbar-h);
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center;
+  padding: 0 20px 0 calc(var(--sidebar-w) + 20px);
+  gap: 14px; z-index: 200;
+}
+.topbar-title {
+  font-size: 15px; font-weight: 600; color: var(--text); flex: 1;
+}
+.topbar-user {
+  display: flex; align-items: center; gap: 10px;
+}
+.topbar-avatar {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent), #818cf8);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 700; color: #fff;
+}
+.topbar-name { font-size: 13px; font-weight: 500; }
+.topbar-role {
+  font-size: 10px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .6px; padding: 2px 8px; border-radius: 20px;
+  background: var(--accent-glow); color: var(--accent2);
+  border: 1px solid rgba(59,130,246,.3);
+}
 
-  /* ── Stats cards ────────────────────────────────── */
-  .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px,1fr)); gap: 14px; margin-bottom: 24px; }
-  .stat-card {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: 10px; padding: 18px; text-align: center;
-  }
-  .stat-card .num   { font-size: 32px; font-weight: 700; line-height: 1; }
-  .stat-card .label { font-size: 12px; color: var(--muted); margin-top: 6px; text-transform: uppercase; }
+/* ── Sidebar ────────────────────────────────────────────── */
+.sidebar {
+  position: fixed; top: var(--topbar-h); left: 0; bottom: 0;
+  width: var(--sidebar-w);
+  background: var(--panel);
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  padding: 16px 10px;
+  z-index: 100;
+}
+.sidebar-logo {
+  display: flex; align-items: center; gap: 10px;
+  padding: 0 8px 20px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 12px;
+}
+.sidebar-logo .logo-sq {
+  width: 34px; height: 34px; border-radius: 9px;
+  background: linear-gradient(135deg, var(--accent), #818cf8);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 17px; flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(59,130,246,.25);
+}
+.sidebar-logo span {
+  font-size: 15px; font-weight: 700; color: var(--text);
+  line-height: 1.2;
+}
+.sidebar-logo small {
+  display: block; font-size: 10px; color: var(--muted); font-weight: 400;
+}
 
-  /* ── Filters ────────────────────────────────────── */
-  .filters {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: 10px; padding: 14px 16px;
-    display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; margin-bottom: 18px;
-  }
-  .filters .fg { display: flex; flex-direction: column; gap: 4px; }
-  .filters .fg label { font-size: 11px; color: var(--muted); text-transform: uppercase; }
-  .filters select, .filters input { width: auto; min-width: 140px; padding: 7px 10px; font-size: 13px; }
+.nav-section {
+  font-size: 10px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .8px; color: var(--muted);
+  padding: 8px 10px 6px; margin-top: 4px;
+}
+.nav-tab {
+  display: flex; align-items: center; gap: 10px;
+  width: 100%; padding: 9px 10px; border-radius: 8px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px; font-weight: 500;
+  color: var(--muted2); border: none; background: none; cursor: pointer;
+  transition: all .15s; text-align: left;
+  margin-bottom: 2px;
+}
+.nav-tab .nav-icon { font-size: 16px; width: 20px; text-align: center; flex-shrink: 0; }
+.nav-tab:hover { background: var(--card); color: var(--text); }
+.nav-tab.active {
+  background: var(--accent-glow);
+  color: var(--accent2);
+  border: 1px solid rgba(59,130,246,.2);
+}
+.nav-tab.active .nav-icon { color: var(--accent); }
 
-  /* ── Table ──────────────────────────────────────── */
-  .table-wrap { background: var(--surface); border: 1px solid var(--border);
-                border-radius: 10px; overflow: auto; }
-  table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  th { padding: 10px 14px; text-align: left; font-size: 11px; text-transform: uppercase;
-       color: var(--muted); border-bottom: 1px solid var(--border); white-space: nowrap; }
-  td { padding: 10px 14px; border-bottom: 1px solid var(--border); vertical-align: middle; }
-  tr:last-child td { border-bottom: none; }
-  tr:hover td { background: var(--surface2); }
-  .badge {
-    display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 11px;
-    font-weight: 600; text-transform: uppercase;
-  }
-  .badge-critical  { background: #f05c6e22; color: var(--critical); border: 1px solid var(--critical); }
-  .badge-high      { background: #f5a62322; color: var(--high);     border: 1px solid var(--high); }
-  .badge-medium    { background: #f5d02022; color: var(--medium);   border: 1px solid var(--medium); }
-  .badge-low       { background: #22d3a022; color: var(--low);      border: 1px solid var(--low); }
-  .badge-open      { background: #5e72eb22; color: var(--open);     border: 1px solid var(--open); }
-  .badge-inprogress{ background: #f5a62322; color: var(--inprogress);border: 1px solid var(--inprogress); }
-  .badge-resolved  { background: #22d3a022; color: var(--resolved); border: 1px solid var(--resolved); }
-  .badge-closed    { background: #8b949e22; color: var(--closed);   border: 1px solid var(--closed); }
-  .badge-rejected  { background: #f05c6e22; color: var(--critical); border: 1px solid var(--critical); }
-  .badge-BREACHED  { background: #f05c6e22; color: var(--critical); border: 1px solid var(--critical); }
-  .badge-WARNING   { background: #f5a62322; color: var(--high);     border: 1px solid var(--high); }
-  .badge-OK        { background: #22d3a022; color: var(--low);      border: 1px solid var(--low); }
-  .badge-NA        { background: #8b949e22; color: var(--closed);   border: 1px solid var(--closed); }
+.sidebar-footer {
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
 
-  /* ── Dynamic fields box ─────────────────────────── */
-  #nt-dynamic-fields {
-    background: var(--surface2); border: 1px solid var(--accent);
-    border-radius: 8px; padding: 16px; margin-bottom: 16px; display: none;
-  }
-  #nt-dynamic-fields h4 {
-    font-size: 12px; text-transform: uppercase; color: var(--accent2);
-    letter-spacing: .5px; margin-bottom: 12px;
-  }
-  .dynamic-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-  @media (max-width: 500px) { .dynamic-grid { grid-template-columns: 1fr; } }
+/* ── Main content ───────────────────────────────────────── */
+.main {
+  margin-left: var(--sidebar-w);
+  margin-top: var(--topbar-h);
+  height: calc(100vh - var(--topbar-h));
+  overflow-y: auto;
+  padding: 24px 28px;
+}
+.page { display: none; animation: fadeUp .25s ease both; }
+.page.active { display: block; }
 
-  /* ── Modal ──────────────────────────────────────── */
-  .modal-overlay {
-    display: none; position: fixed; inset: 0;
-    background: rgba(0,0,0,.7); z-index: 200; align-items: center; justify-content: center;
-  }
-  .modal-overlay.open { display: flex; }
-  .modal {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: 12px; width: min(680px,95vw); max-height: 90vh;
-    overflow-y: auto; padding: 28px;
-  }
-  .modal h2 { font-size: 18px; margin-bottom: 20px; color: var(--accent2); }
-  .modal .row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-  .modal-actions { margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end; }
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
 
-  /* ── Timeline ───────────────────────────────────── */
-  .timeline { margin-top: 20px; }
-  .timeline-item {
-    display: flex; gap: 12px; padding: 10px 0;
-    border-bottom: 1px solid var(--border);
-  }
-  .timeline-dot {
-    width: 10px; height: 10px; border-radius: 50%; margin-top: 4px; flex-shrink: 0;
-    background: var(--accent);
-  }
-  .timeline-meta { font-size: 12px; color: var(--muted); margin-top: 3px; }
+/* ── Page header ────────────────────────────────────────── */
+.page-header {
+  display: flex; align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 24px; gap: 16px;
+}
+.page-header-left h2 {
+  font-size: 22px; font-weight: 700; color: var(--text); line-height: 1.2;
+}
+.page-header-left p {
+  font-size: 13px; color: var(--muted); margin-top: 4px;
+}
+.page-header-actions { display: flex; gap: 8px; flex-shrink: 0; align-items: center; }
 
-  /* ── Misc ───────────────────────────────────────── */
-  .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
-  .section-header h2 { font-size: 17px; }
-  .loading { text-align: center; padding: 40px; color: var(--muted); }
-  .empty   { text-align: center; padding: 40px; color: var(--muted); font-size: 14px; }
-  .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
-  .detail-item label { font-size: 11px; color: var(--muted); text-transform: uppercase; display: block; margin-bottom: 3px; }
-  .detail-item span  { font-size: 14px; }
-  hr { border: none; border-top: 1px solid var(--border); margin: 18px 0; }
+/* ── Stats Grid ─────────────────────────────────────────── */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 14px; margin-bottom: 24px;
+}
+.stat-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 18px 20px;
+  position: relative; overflow: hidden;
+  transition: border-color .15s;
+}
+.stat-card:hover { border-color: var(--border2); }
+.stat-card::before {
+  content: ''; position: absolute;
+  top: 0; left: 0; right: 0; height: 2px;
+  background: var(--stat-color, var(--accent));
+  opacity: .7;
+}
+.stat-card .num {
+  font-size: 30px; font-weight: 700; line-height: 1;
+  font-family: 'DM Mono', monospace;
+  color: var(--stat-color, var(--text));
+}
+.stat-card .label {
+  font-size: 11px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: .5px; color: var(--muted); margin-top: 7px;
+}
+.stat-card .trend {
+  font-size: 11px; color: var(--muted); margin-top: 4px;
+}
+
+/* ── Table ──────────────────────────────────────────────── */
+.table-wrap {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.table-wrap table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.table-wrap thead { background: var(--panel); }
+.table-wrap th {
+  padding: 11px 16px;
+  text-align: left; font-size: 10px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .6px;
+  color: var(--muted); border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+.table-wrap td {
+  padding: 11px 16px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle; color: var(--text);
+}
+.table-wrap tr:last-child td { border-bottom: none; }
+.table-wrap tbody tr { transition: background .1s; }
+.table-wrap tbody tr:hover td { background: var(--card2); }
+
+code.tid {
+  font-family: 'DM Mono', monospace;
+  font-size: 12px; color: var(--accent2);
+  background: var(--accent-glow);
+  padding: 2px 7px; border-radius: 5px;
+  border: 1px solid rgba(59,130,246,.2);
+}
+
+/* ── Badge ──────────────────────────────────────────────── */
+.badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 9px; border-radius: 6px;
+  font-size: 11px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .4px;
+}
+.badge::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+.badge-critical  { background: #ef444418; color: #f87171; border: 1px solid #ef444430; }
+.badge-high      { background: #f9731618; color: #fb923c; border: 1px solid #f9731630; }
+.badge-medium    { background: #eab30818; color: #fbbf24; border: 1px solid #eab30830; }
+.badge-low       { background: #22c55e18; color: #4ade80; border: 1px solid #22c55e30; }
+.badge-open      { background: #3b82f618; color: #60a5fa; border: 1px solid #3b82f630; }
+.badge-inprogress{ background: #a855f718; color: #c084fc; border: 1px solid #a855f730; }
+.badge-resolved  { background: #22c55e18; color: #4ade80; border: 1px solid #22c55e30; }
+.badge-closed    { background: #64748b18; color: #94a3b8; border: 1px solid #64748b30; }
+.badge-rejected  { background: #ef444418; color: #f87171; border: 1px solid #ef444430; }
+.badge-BREACHED  { background: #ef444418; color: #f87171; border: 1px solid #ef444430; }
+.badge-WARNING   { background: #f9731618; color: #fb923c; border: 1px solid #f9731630; }
+.badge-OK        { background: #22c55e18; color: #4ade80; border: 1px solid #22c55e30; }
+.badge-NA        { background: #64748b18; color: #94a3b8; border: 1px solid #64748b30; }
+.badge-support   { background: #3b82f618; color: #60a5fa; border: 1px solid #3b82f630; }
+.badge-technical { background: #a855f718; color: #c084fc; border: 1px solid #a855f730; }
+.badge-admin     { background: #ef444418; color: #f87171; border: 1px solid #ef444430; }
+
+/* ── Filters bar ────────────────────────────────────────── */
+.filters {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px 18px;
+  display: flex; flex-wrap: wrap; gap: 12px;
+  align-items: flex-end; margin-bottom: 18px;
+}
+.filters .fg { display: flex; flex-direction: column; gap: 5px; }
+.filters .fg label {
+  font-size: 10px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .6px; color: var(--muted);
+}
+.filters select, .filters input[type=date] {
+  width: auto; min-width: 140px;
+  padding: 8px 12px; font-size: 13px;
+}
+
+/* ── Form card ──────────────────────────────────────────── */
+.form-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 28px;
+  max-width: 760px;
+}
+.form-card h3 {
+  font-size: 13px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .6px;
+  color: var(--muted2); margin-bottom: 20px;
+  display: flex; align-items: center; gap: 8px;
+}
+.form-card h3::before {
+  content: ''; width: 3px; height: 14px;
+  background: var(--accent); border-radius: 2px;
+}
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+/* ── Dynamic fields box ─────────────────────────────────── */
+#nt-dynamic-fields {
+  background: linear-gradient(135deg, rgba(59,130,246,.06), rgba(129,140,248,.04));
+  border: 1px solid rgba(59,130,246,.25);
+  border-radius: 10px; padding: 18px; margin-bottom: 18px; display: none;
+}
+#nt-dynamic-fields h4 {
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .6px; color: var(--accent2); margin-bottom: 14px;
+  display: flex; align-items: center; gap: 6px;
+}
+.dynamic-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 500px) { .dynamic-grid, .form-row { grid-template-columns: 1fr; } }
+
+/* ── Modal ──────────────────────────────────────────────── */
+.modal-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,.75);
+  backdrop-filter: blur(4px);
+  z-index: 300; align-items: center; justify-content: center;
+  padding: 20px;
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: var(--card);
+  border: 1px solid var(--border2);
+  border-radius: 16px;
+  width: min(680px, 95vw);
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 28px;
+  animation: fadeUp .2s ease both;
+  box-shadow: 0 32px 80px rgba(0,0,0,.6);
+}
+.modal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 22px;
+}
+.modal-header h2 { font-size: 18px; font-weight: 700; }
+.modal-close {
+  width: 30px; height: 30px; border-radius: 7px;
+  background: var(--card2); border: 1px solid var(--border);
+  color: var(--muted2); font-size: 16px;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: all .15s;
+}
+.modal-close:hover { background: var(--critical); color: #fff; border-color: var(--critical); }
+.modal .row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.modal-actions { margin-top: 22px; display: flex; gap: 10px; justify-content: flex-end; }
+
+/* ── Detail grid in modal ───────────────────────────────── */
+.detail-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 1px; background: var(--border);
+  border: 1px solid var(--border); border-radius: 10px;
+  overflow: hidden; margin-bottom: 18px;
+}
+.detail-item {
+  background: var(--card2); padding: 12px 15px;
+}
+.detail-item label {
+  display: block; font-size: 10px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .6px;
+  color: var(--muted); margin-bottom: 4px;
+}
+.detail-item span { font-size: 13px; font-weight: 500; }
+
+/* ── Timeline ───────────────────────────────────────────── */
+.timeline { margin-top: 6px; }
+.timeline-item {
+  display: flex; gap: 14px; padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+.timeline-item:last-child { border-bottom: none; }
+.tl-line { display: flex; flex-direction: column; align-items: center; gap: 0; }
+.timeline-dot {
+  width: 10px; height: 10px; border-radius: 50%;
+  background: var(--accent); flex-shrink: 0;
+  box-shadow: 0 0 8px rgba(59,130,246,.5);
+}
+.timeline-meta { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+/* ── Section heading ────────────────────────────────────── */
+.section-h {
+  font-size: 14px; font-weight: 700; color: var(--text);
+  margin-bottom: 14px; margin-top: 24px;
+  display: flex; align-items: center; gap: 8px;
+}
+.section-h::before {
+  content: ''; width: 3px; height: 14px;
+  background: var(--accent); border-radius: 2px;
+}
+.section-h:first-child { margin-top: 0; }
+
+/* ── Misc ───────────────────────────────────────────────── */
+.loading { text-align: center; padding: 48px; color: var(--muted); }
+.loading::before {
+  content: '';
+  display: block; width: 28px; height: 28px;
+  border: 2px solid var(--border2);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+  margin: 0 auto 12px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.empty {
+  text-align: center; padding: 48px;
+  color: var(--muted); font-size: 13px;
+}
+.empty::before {
+  content: '📭'; display: block;
+  font-size: 28px; margin-bottom: 10px;
+}
+hr { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
+
+.rejection-box {
+  background: rgba(239,68,68,.07);
+  border: 1px solid rgba(239,68,68,.3);
+  border-radius: 10px; padding: 14px;
+  margin-bottom: 16px;
+}
+.rejection-box .rj-label {
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .5px; color: var(--critical); margin-bottom: 6px;
+}
+
+.truncate {
+  max-width: 200px; overflow: hidden;
+  text-overflow: ellipsis; white-space: nowrap;
+}
 </style>
 </head>
 <body>
@@ -197,22 +519,25 @@
      LOGIN
 ════════════════════════════════════════════════════════ -->
 <div id="login-screen">
-  <div class="login-box">
-    <h1>TMS Support Desk</h1>
-    <p>Sign in to your account</p>
-    <div class="form-group">
-      <label>Email</label>
-      <input type="email" id="login-email" placeholder="you@tms.com" autocomplete="username"/>
+  <div class="login-wrap">
+    <div class="login-logo">
+      <div class="logo-icon">🎫</div>
+      <h1>TMS Support Desk</h1>
+      <p>Ticket Management System</p>
     </div>
-    <div class="form-group">
-      <label>Password</label>
-      <input type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password"/>
+    <div class="login-box">
+      <div class="form-group">
+        <label>Email Address</label>
+        <input type="email" id="login-email" placeholder="you@tms.com" autocomplete="username"/>
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password"/>
+      </div>
+      <button class="btn btn-primary btn-full" onclick="doLogin()">Sign In →</button>
+      <div id="login-err" class="err-msg"></div>
+      <p class="hint">Default: admin@tms.com / Admin@123</p>
     </div>
-    <button class="btn btn-primary btn-full" onclick="doLogin()">Sign In</button>
-    <div id="login-err" class="err-msg"></div>
-    <p style="margin-top:16px;font-size:12px;color:var(--muted);text-align:center">
-      Default: admin@tms.com / Admin@123
-    </p>
   </div>
 </div>
 
@@ -220,62 +545,125 @@
      APP
 ════════════════════════════════════════════════════════ -->
 <div id="app">
+
+  <!-- Topbar -->
   <div class="topbar">
-    <div class="topbar-logo">🎫 TMS Support Desk</div>
-    <span class="topbar-user" id="topbar-user"></span>
-    <span class="topbar-role" id="topbar-role"></span>
-    <button class="btn btn-sm" style="background:var(--surface2);color:var(--text);" onclick="doLogout()">Logout</button>
+    <div class="topbar-title" id="topbar-title">Dashboard</div>
+    <div class="topbar-user">
+      <div class="topbar-avatar" id="topbar-avatar">H</div>
+      <span class="topbar-name" id="topbar-user"></span>
+      <span class="topbar-role" id="topbar-role"></span>
+      <button class="btn btn-ghost btn-sm" onclick="doLogout()">Sign out</button>
+    </div>
   </div>
 
-  <div class="nav">
-    <button class="nav-tab active" data-page="dashboard">Dashboard</button>
-    <button class="nav-tab" data-page="tickets">All Tickets</button>
-    <button class="nav-tab" data-page="new-ticket">Raise Ticket</button>
-    <button class="nav-tab" data-page="reports">Reports</button>
-    <button class="nav-tab admin-only" data-page="users" style="display:none">Users</button>
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-sq">🎫</div>
+      <span>TMS<small>Support Desk</small></span>
+    </div>
+
+    <div class="nav-section">Main</div>
+    <button class="nav-tab active" data-page="dashboard">
+      <span class="nav-icon">📊</span> Dashboard
+    </button>
+    <button class="nav-tab" data-page="tickets">
+      <span class="nav-icon">🎟</span> All Tickets
+    </button>
+    <button class="nav-tab" data-page="new-ticket">
+      <span class="nav-icon">✏️</span> Raise Ticket
+    </button>
+
+    <div class="nav-section" style="margin-top:8px">Analytics</div>
+    <button class="nav-tab" data-page="reports">
+      <span class="nav-icon">📈</span> Reports
+    </button>
+
+    <div class="nav-section admin-only" style="display:none;margin-top:8px">Admin</div>
+    <button class="nav-tab admin-only" data-page="users" style="display:none">
+      <span class="nav-icon">👥</span> Users
+    </button>
+
+    <div class="sidebar-footer">
+      <button class="btn btn-ghost btn-sm" style="width:100%;justify-content:center" onclick="doLogout()">
+        Sign out
+      </button>
+    </div>
   </div>
 
+  <!-- Main -->
   <div class="main">
 
-    <!-- ── Dashboard ─────────────────────────────── -->
+    <!-- ── Dashboard ──────────────────────────────────── -->
     <div class="page active" id="page-dashboard">
-      <div class="section-header">
-        <h2>Overview</h2>
-        <div style="display:flex;gap:8px">
-          <button class="btn btn-sm btn-primary" onclick="exportFile('excel')">⬇ Excel</button>
-          <button class="btn btn-sm" style="background:var(--surface2);color:var(--text)" onclick="exportFile('pdf')">⬇ PDF</button>
-          <button class="btn btn-sm btn-purple" onclick="downloadPPTX()">📊 Weekly PPTX</button>
+      <div class="page-header">
+        <div class="page-header-left">
+          <h2>Overview</h2>
+          <p>System-wide ticket activity and status summary</p>
+        </div>
+        <div class="page-header-actions">
+          <button class="btn btn-ghost btn-sm" onclick="exportFile('excel')">⬇ Excel</button>
+          <button class="btn btn-ghost btn-sm" onclick="exportFile('pdf')">⬇ PDF</button>
+          <button class="btn btn-purple btn-sm" onclick="downloadPPTX()">📊 PPTX Report</button>
         </div>
       </div>
+
       <div class="stats-grid" id="stats-grid">
-        <div class="stat-card"><div class="num" id="s-total">—</div><div class="label">Total</div></div>
-        <div class="stat-card"><div class="num" style="color:var(--open)"    id="s-open">—</div><div class="label">Open</div></div>
-        <div class="stat-card"><div class="num" style="color:var(--inprogress)" id="s-inprog">—</div><div class="label">In Progress</div></div>
-        <div class="stat-card"><div class="num" style="color:var(--resolved)" id="s-resolved">—</div><div class="label">Resolved</div></div>
-        <div class="stat-card"><div class="num" style="color:var(--closed)"   id="s-closed">—</div><div class="label">Closed</div></div>
-        <div class="stat-card"><div class="num" style="color:var(--critical)" id="s-critical">—</div><div class="label">Critical</div></div>
-        <div class="stat-card"><div class="num" style="color:var(--sla-breach)" id="s-breached">—</div><div class="label">SLA Breached</div></div>
+        <div class="stat-card" style="--stat-color:var(--text)">
+          <div class="num" id="s-total">—</div>
+          <div class="label">Total Tickets</div>
+        </div>
+        <div class="stat-card" style="--stat-color:var(--open)">
+          <div class="num" id="s-open">—</div>
+          <div class="label">Open</div>
+        </div>
+        <div class="stat-card" style="--stat-color:var(--inprogress)">
+          <div class="num" id="s-inprog">—</div>
+          <div class="label">In Progress</div>
+        </div>
+        <div class="stat-card" style="--stat-color:var(--resolved)">
+          <div class="num" id="s-resolved">—</div>
+          <div class="label">Resolved</div>
+        </div>
+        <div class="stat-card" style="--stat-color:var(--closed)">
+          <div class="num" id="s-closed">—</div>
+          <div class="label">Closed</div>
+        </div>
+        <div class="stat-card" style="--stat-color:var(--critical)">
+          <div class="num" id="s-critical">—</div>
+          <div class="label">Critical</div>
+        </div>
+        <div class="stat-card" style="--stat-color:var(--sla-breach)">
+          <div class="num" id="s-breached">—</div>
+          <div class="label">SLA Breached</div>
+        </div>
       </div>
 
-      <div class="section-header" style="margin-top:8px">
-        <h2>Recent Tickets</h2>
-      </div>
+      <div class="section-h">Recent Tickets</div>
       <div class="table-wrap">
         <table>
           <thead>
-            <tr><th>Ticket ID</th><th>Broker</th><th>Category</th><th>Heading</th>
-                <th>Priority</th><th>Status</th><th>SLA</th><th>Raised At</th><th>Action</th></tr>
+            <tr>
+              <th>Ticket ID</th><th>Broker</th><th>Category</th>
+              <th>Heading</th><th>Priority</th><th>Status</th>
+              <th>SLA</th><th>Raised At</th><th>Action</th>
+            </tr>
           </thead>
-          <tbody id="dash-tbody"><tr><td colspan="9" class="loading">Loading…</td></tr></tbody>
+          <tbody id="dash-tbody"><tr><td colspan="9" class="loading"></td></tr></tbody>
         </table>
       </div>
     </div>
 
-    <!-- ── All Tickets ───────────────────────────── -->
+    <!-- ── All Tickets ─────────────────────────────────── -->
     <div class="page" id="page-tickets">
-      <div class="section-header">
-        <h2>All Tickets</h2>
+      <div class="page-header">
+        <div class="page-header-left">
+          <h2>All Tickets</h2>
+          <p>Filter and manage all support tickets</p>
+        </div>
       </div>
+
       <div class="filters">
         <div class="fg">
           <label>Broker</label>
@@ -312,55 +700,75 @@
           <label>To</label>
           <input type="date" id="f-to"/>
         </div>
-        <button class="btn btn-primary btn-sm" onclick="loadTickets()">Filter</button>
-        <button class="btn btn-sm" style="background:var(--surface2);color:var(--text)" onclick="clearFilters()">Clear</button>
+        <button class="btn btn-primary btn-sm" onclick="loadTickets()">Apply Filter</button>
+        <button class="btn btn-ghost btn-sm" onclick="clearFilters()">Clear</button>
       </div>
+
       <div class="table-wrap">
         <table>
           <thead>
-            <tr><th>Ticket ID</th><th>Broker</th><th>Category</th><th>Heading</th>
-                <th>Priority</th><th>Status</th><th>SLA</th><th>Raised At</th><th>Assigned To</th><th>Action</th></tr>
+            <tr>
+              <th>Ticket ID</th><th>Broker</th><th>Category</th>
+              <th>Heading</th><th>Priority</th><th>Status</th>
+              <th>SLA</th><th>Raised At</th><th>Assigned To</th><th>Action</th>
+            </tr>
           </thead>
-          <tbody id="tickets-tbody"><tr><td colspan="10" class="loading">Loading…</td></tr></tbody>
+          <tbody id="tickets-tbody"><tr><td colspan="10" class="loading"></td></tr></tbody>
         </table>
       </div>
     </div>
 
-    <!-- ── Raise Ticket ──────────────────────────── -->
+    <!-- ── Raise Ticket ────────────────────────────────── -->
     <div class="page" id="page-new-ticket">
-      <div class="section-header"><h2>Raise New Ticket</h2></div>
-      <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:24px;max-width:720px">
+      <div class="page-header">
+        <div class="page-header-left">
+          <h2>Raise New Ticket</h2>
+          <p>Submit a new support request</p>
+        </div>
+      </div>
 
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:4px">
-          <div class="form-group">
+      <div class="form-card">
+        <h3>Ticket Details</h3>
+
+        <div class="form-row" style="margin-bottom:16px">
+          <div class="form-group" style="margin-bottom:0">
             <label>Broker *</label>
             <select id="nt-broker"><option value="">Select broker…</option></select>
           </div>
-          <div class="form-group">
+          <div class="form-group" style="margin-bottom:0">
             <label>Client Account ID</label>
             <input type="text" id="nt-account" placeholder="Optional"/>
           </div>
-          <div class="form-group">
+        </div>
+
+        <div class="form-row" style="margin-bottom:16px">
+          <div class="form-group" style="margin-bottom:0">
             <label>Category *</label>
-            <select id="nt-category" onchange="onCategoryChange()"><option value="">Select category…</option></select>
+            <select id="nt-category" onchange="onCategoryChange()">
+              <option value="">Select category…</option>
+            </select>
           </div>
-          <div class="form-group">
+          <div class="form-group" style="margin-bottom:0">
             <label>Sub Issue *</label>
-            <select id="nt-subissue"><option value="">Select category first…</option></select>
-          </div>
-          <div class="form-group">
-            <label>Priority *</label>
-            <select id="nt-priority">
-              <option value="">Select priority…</option>
-              <option value="low">Low</option>
-              <option value="medium">Medium</option>
-              <option value="high">High</option>
-              <option value="critical">Critical</option>
+            <select id="nt-subissue">
+              <option value="">Select category first…</option>
             </select>
           </div>
         </div>
 
-        <!-- ── Dynamic fields (shown based on category) ── -->
+        <div style="max-width:340px;margin-bottom:16px">
+          <div class="form-group" style="margin-bottom:0">
+            <label>Priority *</label>
+            <select id="nt-priority">
+              <option value="">Select priority…</option>
+              <option value="low">🟢 Low</option>
+              <option value="medium">🟡 Medium</option>
+              <option value="high">🟠 High</option>
+              <option value="critical">🔴 Critical</option>
+            </select>
+          </div>
+        </div>
+
         <div id="nt-dynamic-fields">
           <h4>📋 Category Specific Details</h4>
           <div class="dynamic-grid" id="nt-dynamic-grid"></div>
@@ -372,59 +780,70 @@
         </div>
         <div class="form-group">
           <label>Remarks *</label>
-          <textarea id="nt-remarks" rows="5" placeholder="Detailed description of the issue"></textarea>
+          <textarea id="nt-remarks" rows="5" placeholder="Detailed description of the issue…"></textarea>
         </div>
-        <div id="nt-err" class="err-msg" style="text-align:left;margin-bottom:10px"></div>
-        <button class="btn btn-primary" onclick="raiseTicket()">Submit Ticket</button>
+
+        <div id="nt-err" class="err-msg" style="text-align:left;margin-bottom:14px"></div>
+        <button class="btn btn-primary" onclick="raiseTicket()">Submit Ticket →</button>
       </div>
     </div>
 
-    <!-- ── Reports ───────────────────────────────── -->
+    <!-- ── Reports ─────────────────────────────────────── -->
     <div class="page" id="page-reports">
-      <div class="section-header">
-        <h2>Reports</h2>
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <button class="btn btn-sm btn-primary" onclick="exportFile('excel')">⬇ Excel</button>
-          <button class="btn btn-sm" style="background:var(--surface2);color:var(--text)" onclick="exportFile('pdf')">⬇ PDF</button>
-          <button class="btn btn-sm btn-purple" onclick="downloadPPTX()">📊 Weekly PPTX Report</button>
+      <div class="page-header">
+        <div class="page-header-left">
+          <h2>Reports</h2>
+          <p>Broker and category performance summaries</p>
+        </div>
+        <div class="page-header-actions">
+          <button class="btn btn-ghost btn-sm" onclick="exportFile('excel')">⬇ Excel</button>
+          <button class="btn btn-ghost btn-sm" onclick="exportFile('pdf')">⬇ PDF</button>
+          <button class="btn btn-purple btn-sm" onclick="downloadPPTX()">📊 Weekly PPTX</button>
         </div>
       </div>
 
-      <h3 style="margin-bottom:12px;font-size:15px">Broker Summary</h3>
-      <div class="table-wrap" style="margin-bottom:24px">
+      <div class="section-h">Broker Summary</div>
+      <div class="table-wrap" style="margin-bottom:28px">
         <table>
           <thead>
-            <tr><th>Broker</th><th>Contact</th><th>Total</th><th>Open</th>
-                <th>In Progress</th><th>Resolved</th><th>Critical</th><th>SLA Breached</th><th>Avg Resolution</th></tr>
+            <tr>
+              <th>Broker</th><th>Contact</th><th>Total</th><th>Open</th>
+              <th>In Progress</th><th>Resolved</th><th>Critical</th>
+              <th>SLA Breached</th><th>Avg Resolution</th>
+            </tr>
           </thead>
-          <tbody id="broker-tbody"><tr><td colspan="9" class="loading">Loading…</td></tr></tbody>
+          <tbody id="broker-tbody"><tr><td colspan="9" class="loading"></td></tr></tbody>
         </table>
       </div>
 
-      <h3 style="margin-bottom:12px;font-size:15px">Category Summary</h3>
+      <div class="section-h">Category Summary</div>
       <div class="table-wrap">
         <table>
           <thead>
-            <tr><th>Category</th><th>SLA Hours</th><th>Total</th><th>Open</th>
-                <th>Resolved</th><th>SLA Breached</th></tr>
+            <tr><th>Category</th><th>SLA Hours</th><th>Total</th><th>Open</th><th>Resolved</th><th>SLA Breached</th></tr>
           </thead>
-          <tbody id="category-tbody"><tr><td colspan="6" class="loading">Loading…</td></tr></tbody>
+          <tbody id="category-tbody"><tr><td colspan="6" class="loading"></td></tr></tbody>
         </table>
       </div>
     </div>
 
-    <!-- ── Users (admin) ─────────────────────────── -->
+    <!-- ── Users ───────────────────────────────────────── -->
     <div class="page" id="page-users">
-      <div class="section-header">
-        <h2>User Management</h2>
-        <button class="btn btn-primary btn-sm" onclick="openModal('modal-new-user')">+ Add User</button>
+      <div class="page-header">
+        <div class="page-header-left">
+          <h2>User Management</h2>
+          <p>Manage support team members and roles</p>
+        </div>
+        <div class="page-header-actions">
+          <button class="btn btn-primary btn-sm" onclick="openModal('modal-new-user')">+ Add User</button>
+        </div>
       </div>
       <div class="table-wrap">
         <table>
           <thead>
-            <tr><th>Name</th><th>Email</th><th>Role</th><th>Active</th><th>Created</th><th>Action</th></tr>
+            <tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Created</th><th>Action</th></tr>
           </thead>
-          <tbody id="users-tbody"><tr><td colspan="6" class="loading">Loading…</td></tr></tbody>
+          <tbody id="users-tbody"><tr><td colspan="6" class="loading"></td></tr></tbody>
         </table>
       </div>
     </div>
@@ -436,21 +855,27 @@
      MODALS
 ════════════════════════════════════════════════════════ -->
 
-<!-- Ticket Detail Modal -->
+<!-- Ticket Detail -->
 <div class="modal-overlay" id="modal-ticket">
-  <div class="modal" style="width:min(780px,95vw)">
-    <h2 id="md-ticket-id">Ticket Detail</h2>
-    <div id="md-body">Loading…</div>
+  <div class="modal" style="width:min(800px,95vw)">
+    <div class="modal-header">
+      <h2 id="md-ticket-id">Ticket Detail</h2>
+      <button class="modal-close" onclick="closeModal('modal-ticket')">✕</button>
+    </div>
+    <div id="md-body"><div class="loading"></div></div>
     <div class="modal-actions">
-      <button class="btn btn-sm" style="background:var(--surface2);color:var(--text)" onclick="closeModal('modal-ticket')">Close</button>
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('modal-ticket')">Close</button>
     </div>
   </div>
 </div>
 
-<!-- New User Modal -->
+<!-- New User -->
 <div class="modal-overlay" id="modal-new-user">
-  <div class="modal" style="width:420px">
-    <h2>Add New User</h2>
+  <div class="modal" style="width:min(440px,95vw)">
+    <div class="modal-header">
+      <h2>Add New User</h2>
+      <button class="modal-close" onclick="closeModal('modal-new-user')">✕</button>
+    </div>
     <div class="form-group"><label>Full Name *</label><input type="text" id="nu-name"/></div>
     <div class="form-group"><label>Email *</label><input type="email" id="nu-email"/></div>
     <div class="form-group"><label>Password *</label><input type="password" id="nu-pass" placeholder="Min 8 chars"/></div>
@@ -464,16 +889,19 @@
     </div>
     <div id="nu-err" class="err-msg" style="text-align:left;margin-bottom:10px"></div>
     <div class="modal-actions">
-      <button class="btn btn-sm" style="background:var(--surface2);color:var(--text)" onclick="closeModal('modal-new-user')">Cancel</button>
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('modal-new-user')">Cancel</button>
       <button class="btn btn-primary btn-sm" onclick="createUser()">Create User</button>
     </div>
   </div>
 </div>
 
-<!-- Status Update Modal -->
+<!-- Status Update -->
 <div class="modal-overlay" id="modal-status">
-  <div class="modal" style="width:420px">
-    <h2>Update Ticket Status</h2>
+  <div class="modal" style="width:min(440px,95vw)">
+    <div class="modal-header">
+      <h2>Update Ticket Status</h2>
+      <button class="modal-close" onclick="closeModal('modal-status')">✕</button>
+    </div>
     <input type="hidden" id="su-ticket-id"/>
     <div class="form-group">
       <label>New Status *</label>
@@ -491,16 +919,19 @@
     </div>
     <div id="su-err" class="err-msg" style="text-align:left;margin-bottom:10px"></div>
     <div class="modal-actions">
-      <button class="btn btn-sm" style="background:var(--surface2);color:var(--text)" onclick="closeModal('modal-status')">Cancel</button>
-      <button class="btn btn-primary btn-sm" onclick="submitStatusUpdate()">Update</button>
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('modal-status')">Cancel</button>
+      <button class="btn btn-primary btn-sm" onclick="submitStatusUpdate()">Update Status</button>
     </div>
   </div>
 </div>
 
-<!-- Reject Ticket Modal -->
+<!-- Reject Ticket -->
 <div class="modal-overlay" id="modal-reject">
-  <div class="modal" style="width:420px">
-    <h2 style="color:var(--critical)">Reject Ticket</h2>
+  <div class="modal" style="width:min(440px,95vw)">
+    <div class="modal-header">
+      <h2 style="color:var(--critical)">Reject Ticket</h2>
+      <button class="modal-close" onclick="closeModal('modal-reject')">✕</button>
+    </div>
     <input type="hidden" id="rj-ticket-id"/>
     <div class="form-group">
       <label>Rejection Reason * (min 10 chars)</label>
@@ -508,22 +939,21 @@
     </div>
     <div id="rj-err" class="err-msg" style="text-align:left;margin-bottom:10px"></div>
     <div class="modal-actions">
-      <button class="btn btn-sm" style="background:var(--surface2);color:var(--text)" onclick="closeModal('modal-reject')">Cancel</button>
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('modal-reject')">Cancel</button>
       <button class="btn btn-danger btn-sm" onclick="submitReject()">Reject Ticket</button>
     </div>
   </div>
 </div>
 
 <script>
-// ────────────────────────────────────────────────────────
-// State & helpers
-// ────────────────────────────────────────────────────────
+// ──────────────────────────────────────────────────────────
+// State & helpers  (ALL UNCHANGED from original)
+// ──────────────────────────────────────────────────────────
 let token = localStorage.getItem('tms_token');
 let me    = JSON.parse(localStorage.getItem('tms_user') || 'null');
 let allSubIssues  = [];
 let allCategories = [];
 
-// Category dynamic fields definition (mirrors backend)
 const CATEGORY_FIELDS = {
   'kyc issue':        [{key:'ClientID',label:'Client ID',required:true},{key:'BOID',label:'BOID',required:true}],
   'dp issue':         [{key:'ClientCode',label:'Client Code',required:true},{key:'BOID',label:'BOID',required:true},{key:'Script',label:'Script',required:true},{key:'Quantity',label:'Quantity',required:true}],
@@ -567,9 +997,9 @@ function badge(cls, text) {
 function openModal(id)  { document.getElementById(id).classList.add('open'); }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 
-// ────────────────────────────────────────────────────────
-// Login / Logout
-// ────────────────────────────────────────────────────────
+// ──────────────────────────────────────────────────────────
+// Login / Logout  (UNCHANGED)
+// ──────────────────────────────────────────────────────────
 async function doLogin() {
   const email = document.getElementById('login-email').value.trim();
   const pass  = document.getElementById('login-pass').value;
@@ -593,14 +1023,17 @@ function doLogout() {
   location.reload();
 }
 
-// ────────────────────────────────────────────────────────
-// App init
-// ────────────────────────────────────────────────────────
+// ──────────────────────────────────────────────────────────
+// App init  (UNCHANGED logic, updated DOM refs)
+// ──────────────────────────────────────────────────────────
 function initApp() {
   document.getElementById('login-screen').style.display = 'none';
-  document.getElementById('app').style.display = 'block';
-  document.getElementById('topbar-user').textContent = me.name;
-  document.getElementById('topbar-role').textContent = me.role;
+  document.getElementById('app').style.display = 'flex';
+
+  const initials = (me.name || 'U').charAt(0).toUpperCase();
+  document.getElementById('topbar-avatar').textContent = initials;
+  document.getElementById('topbar-user').textContent   = me.name;
+  document.getElementById('topbar-role').textContent   = me.role;
 
   if (me.role === 'admin') {
     document.querySelectorAll('.admin-only').forEach(el => el.style.display = '');
@@ -611,8 +1044,12 @@ function initApp() {
       document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
       document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
       tab.classList.add('active');
-      document.getElementById('page-' + tab.dataset.page).classList.add('active');
-      onPageChange(tab.dataset.page);
+      const page = tab.dataset.page;
+      document.getElementById('page-' + page).classList.add('active');
+      // Update topbar title
+      document.getElementById('topbar-title').textContent =
+        tab.textContent.trim().replace(/^[^\w]+/, '');
+      onPageChange(page);
     });
   });
 
@@ -627,9 +1064,9 @@ function onPageChange(page) {
   if (page === 'users')     loadUsers();
 }
 
-// ────────────────────────────────────────────────────────
-// Meta (brokers, categories, subissues)
-// ────────────────────────────────────────────────────────
+// ──────────────────────────────────────────────────────────
+// Meta  (UNCHANGED)
+// ──────────────────────────────────────────────────────────
 async function loadMeta() {
   try {
     const [brokers, cats] = await Promise.all([
@@ -658,15 +1095,14 @@ async function loadMeta() {
   } catch(e) { console.error('loadMeta error:', e); }
 }
 
-// ────────────────────────────────────────────────────────
-// Category change → SubIssues + Dynamic Fields
-// ────────────────────────────────────────────────────────
+// ──────────────────────────────────────────────────────────
+// Category change  (UNCHANGED)
+// ──────────────────────────────────────────────────────────
 function onCategoryChange() {
-  const sel    = document.getElementById('nt-category');
-  const catID  = +sel.value;
+  const sel     = document.getElementById('nt-category');
+  const catID   = +sel.value;
   const catName = sel.options[sel.selectedIndex]?.dataset.name || '';
 
-  // SubIssues
   const subs = allSubIssues.filter(s => s.CategoryID === catID);
   const el   = document.getElementById('nt-subissue');
   el.innerHTML = subs.length
@@ -674,7 +1110,6 @@ function onCategoryChange() {
         `<option value="${s.SubIssueID}">${s.SubIssueName}</option>`).join('')
     : '<option value="">No sub-issues found</option>';
 
-  // Dynamic fields
   const fields    = CATEGORY_FIELDS[catName.toLowerCase()] || [];
   const container = document.getElementById('nt-dynamic-fields');
   const grid      = document.getElementById('nt-dynamic-grid');
@@ -694,9 +1129,9 @@ function onCategoryChange() {
   `).join('');
 }
 
-// ────────────────────────────────────────────────────────
-// Dashboard
-// ────────────────────────────────────────────────────────
+// ──────────────────────────────────────────────────────────
+// Dashboard  (UNCHANGED)
+// ──────────────────────────────────────────────────────────
 async function loadDashboard() {
   try {
     const [overview, tickets] = await Promise.all([
@@ -714,31 +1149,32 @@ async function loadDashboard() {
     const recent = tickets.slice(0, 15);
     document.getElementById('dash-tbody').innerHTML = recent.length
       ? recent.map(t => ticketRow(t, 9)).join('')
-      : `<tr><td colspan="9" class="empty">No tickets found</td></tr>`;
+      : `<tr><td colspan="9" class="empty"></td></tr>`;
   } catch(e) {
-    document.getElementById('dash-tbody').innerHTML = `<tr><td colspan="9" class="empty">Error: ${e.message}</td></tr>`;
+    document.getElementById('dash-tbody').innerHTML =
+      `<tr><td colspan="9" style="text-align:center;padding:32px;color:var(--critical)">Error: ${e.message}</td></tr>`;
   }
 }
 
 function ticketRow(t, cols) {
   const sla = t.SLAStatus || (t.SLABreached ? 'BREACHED' : 'OK');
   return `<tr>
-    <td><code style="color:var(--accent2)">${t.TicketID}</code></td>
+    <td><code class="tid">${t.TicketID}</code></td>
     <td>${t.BrokerName || '—'}</td>
     <td>${t.CategoryName || '—'}</td>
-    <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${t.Heading}">${t.Heading}</td>
+    <td><span class="truncate" title="${t.Heading}">${t.Heading}</span></td>
     <td>${badge('', t.Priority)}</td>
     <td>${badge('', t.Status)}</td>
     <td>${badge('', sla)}</td>
-    <td style="white-space:nowrap">${fmt(t.RaisedAt)}</td>
-    ${cols === 10 ? `<td>${t.AssignedTo || '—'}</td>` : ''}
-    <td><button class="btn btn-sm btn-primary" onclick="viewTicket('${t.TicketID}')">View</button></td>
+    <td style="white-space:nowrap;color:var(--muted2)">${fmt(t.RaisedAt)}</td>
+    ${cols === 10 ? `<td style="color:var(--muted2)">${t.AssignedTo || '—'}</td>` : ''}
+    <td><button class="btn btn-primary btn-sm" onclick="viewTicket('${t.TicketID}')">View</button></td>
   </tr>`;
 }
 
-// ────────────────────────────────────────────────────────
-// All Tickets
-// ────────────────────────────────────────────────────────
+// ──────────────────────────────────────────────────────────
+// All Tickets  (UNCHANGED)
+// ──────────────────────────────────────────────────────────
 async function loadTickets() {
   const params = new URLSearchParams();
   const broker   = document.getElementById('f-broker').value;
@@ -754,14 +1190,15 @@ async function loadTickets() {
   if (from)     params.set('dateFrom',   from);
   if (to)       params.set('dateTo',     to);
 
-  document.getElementById('tickets-tbody').innerHTML = `<tr><td colspan="10" class="loading">Loading…</td></tr>`;
+  document.getElementById('tickets-tbody').innerHTML = `<tr><td colspan="10" class="loading"></td></tr>`;
   try {
     const tickets = await api('/tickets?' + params);
     document.getElementById('tickets-tbody').innerHTML = tickets.length
       ? tickets.map(t => ticketRow(t, 10)).join('')
-      : `<tr><td colspan="10" class="empty">No tickets match the filters</td></tr>`;
+      : `<tr><td colspan="10" class="empty"></td></tr>`;
   } catch(e) {
-    document.getElementById('tickets-tbody').innerHTML = `<tr><td colspan="10" class="empty">Error: ${e.message}</td></tr>`;
+    document.getElementById('tickets-tbody').innerHTML =
+      `<tr><td colspan="10" style="text-align:center;padding:32px;color:var(--critical)">Error: ${e.message}</td></tr>`;
   }
 }
 
@@ -771,12 +1208,12 @@ function clearFilters() {
   loadTickets();
 }
 
-// ────────────────────────────────────────────────────────
-// View Ticket
-// ────────────────────────────────────────────────────────
+// ──────────────────────────────────────────────────────────
+// View Ticket  (UNCHANGED)
+// ──────────────────────────────────────────────────────────
 async function viewTicket(id) {
   document.getElementById('md-ticket-id').textContent = id;
-  document.getElementById('md-body').innerHTML = '<div class="loading">Loading…</div>';
+  document.getElementById('md-body').innerHTML = '<div class="loading"></div>';
   openModal('modal-ticket');
   try {
     const t = await api('/tickets/' + id);
@@ -797,56 +1234,63 @@ async function viewTicket(id) {
         <div class="detail-item"><label>Last Updated</label><span>${fmt(t.LastUpdatedAt)}</span></div>
       </div>`;
 
-    // Dynamic fields
     if (t.dynamicFields && t.dynamicFields.length > 0) {
-      html += `<div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:14px">
-        <div style="font-size:11px;color:var(--accent2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">📋 Category Details</div>
+      html += `<div style="background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:16px">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--accent2);margin-bottom:12px">📋 Category Details</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
         ${t.dynamicFields.map(f => `
-          <div><label style="font-size:11px;color:var(--muted);text-transform:uppercase;display:block;margin-bottom:3px">${f.FieldName}</label>
-          <span style="font-size:14px;font-weight:600">${f.FieldValue || '—'}</span></div>
+          <div>
+            <label style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);display:block;margin-bottom:4px">${f.FieldName}</label>
+            <span style="font-size:14px;font-weight:600">${f.FieldValue || '—'}</span>
+          </div>
         `).join('')}
         </div></div>`;
     }
 
     html += `
-      <div style="margin-bottom:12px"><label style="font-size:11px;color:var(--muted);text-transform:uppercase">Heading</label>
-        <p style="margin-top:4px;font-weight:600">${t.Heading}</p></div>
-      <div style="margin-bottom:12px"><label style="font-size:11px;color:var(--muted);text-transform:uppercase">Remarks</label>
-        <p style="margin-top:4px;white-space:pre-wrap;font-size:13px">${t.Remarks || '—'}</p></div>`;
+      <div style="margin-bottom:14px">
+        <label style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);display:block;margin-bottom:5px">Heading</label>
+        <p style="font-weight:600;font-size:14px">${t.Heading}</p>
+      </div>
+      <div style="margin-bottom:14px">
+        <label style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);display:block;margin-bottom:5px">Remarks</label>
+        <p style="white-space:pre-wrap;font-size:13px;color:var(--muted2);line-height:1.6">${t.Remarks || '—'}</p>
+      </div>`;
 
     if (t.ResolutionNotes) {
-      html += `<div style="margin-bottom:12px"><label style="font-size:11px;color:var(--muted);text-transform:uppercase">Resolution Notes</label>
-        <p style="margin-top:4px;white-space:pre-wrap;font-size:13px">${t.ResolutionNotes}</p></div>`;
-    }
-
-    if (t.IsRejected || t.Status === 'rejected') {
-      html += `<div style="background:#f05c6e22;border:1px solid var(--critical);border-radius:8px;padding:12px;margin-bottom:14px">
-        <div style="font-size:11px;color:var(--critical);text-transform:uppercase;margin-bottom:6px">🚫 Rejected by: ${t.RejectedByName || '—'}</div>
-        <p style="font-size:13px">${t.RejectionReason || '—'}</p>
+      html += `<div style="margin-bottom:14px">
+        <label style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);display:block;margin-bottom:5px">Resolution Notes</label>
+        <p style="white-space:pre-wrap;font-size:13px;color:var(--muted2);line-height:1.6">${t.ResolutionNotes}</p>
       </div>`;
     }
 
-    // Action buttons
+    if (t.IsRejected || t.Status === 'rejected') {
+      html += `<div class="rejection-box">
+        <div class="rj-label">🚫 Rejected by: ${t.RejectedByName || '—'}</div>
+        <p style="font-size:13px;color:var(--muted2)">${t.RejectionReason || '—'}</p>
+      </div>`;
+    }
+
     if (t.Status !== 'closed' && t.Status !== 'rejected') {
-      html += `<div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
-        <button class="btn btn-sm btn-primary" onclick="openStatusModal('${t.TicketID}','${t.Status}')">Update Status</button>`;
+      html += `<div style="display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap">
+        <button class="btn btn-primary btn-sm" onclick="openStatusModal('${t.TicketID}','${t.Status}')">Update Status</button>`;
       if (me.role !== 'support') {
-        html += `<button class="btn btn-sm btn-warning" onclick="openAssignModal('${t.TicketID}')">Assign Agent</button>
-                 <button class="btn btn-sm btn-danger" onclick="openRejectModal('${t.TicketID}')">Reject</button>`;
+        html += `<button class="btn btn-warning btn-sm" onclick="openAssignModal('${t.TicketID}')">Assign Agent</button>
+                 <button class="btn btn-danger btn-sm" onclick="openRejectModal('${t.TicketID}')">Reject</button>`;
       }
       html += `</div>`;
     }
 
-    // Timeline
-    html += `<hr><div class="timeline"><h3 style="font-size:14px;margin-bottom:10px">Timeline</h3>`;
+    html += `<hr>
+      <div style="font-size:13px;font-weight:700;margin-bottom:12px;color:var(--text)">Timeline</div>
+      <div class="timeline">`;
     if (t.timeline && t.timeline.length) {
       html += t.timeline.map(tl => `
         <div class="timeline-item">
-          <div class="timeline-dot"></div>
-          <div>
+          <div class="tl-line"><div class="timeline-dot"></div></div>
+          <div style="flex:1">
             <div style="font-size:13px;font-weight:600;text-transform:capitalize">${tl.ActionType}</div>
-            <div style="font-size:13px;margin-top:2px">${tl.ActionNote || ''}</div>
+            <div style="font-size:13px;margin-top:2px;color:var(--muted2)">${tl.ActionNote || ''}</div>
             <div class="timeline-meta">${tl.ActionByName || '—'} · ${fmt(tl.ActionAt)}</div>
           </div>
         </div>`).join('');
@@ -861,9 +1305,9 @@ async function viewTicket(id) {
   }
 }
 
-// ────────────────────────────────────────────────────────
-// Status Update
-// ────────────────────────────────────────────────────────
+// ──────────────────────────────────────────────────────────
+// Status Update  (UNCHANGED)
+// ──────────────────────────────────────────────────────────
 function openStatusModal(ticketID, currentStatus) {
   closeModal('modal-ticket');
   document.getElementById('su-ticket-id').value  = ticketID;
@@ -893,9 +1337,9 @@ async function submitStatusUpdate() {
   }
 }
 
-// ────────────────────────────────────────────────────────
-// Reject Ticket
-// ────────────────────────────────────────────────────────
+// ──────────────────────────────────────────────────────────
+// Reject Ticket  (UNCHANGED)
+// ──────────────────────────────────────────────────────────
 function openRejectModal(ticketID) {
   closeModal('modal-ticket');
   document.getElementById('rj-ticket-id').value  = ticketID;
@@ -922,9 +1366,9 @@ async function submitReject() {
   }
 }
 
-// ────────────────────────────────────────────────────────
-// Assign Agent
-// ────────────────────────────────────────────────────────
+// ──────────────────────────────────────────────────────────
+// Assign Agent  (UNCHANGED)
+// ──────────────────────────────────────────────────────────
 async function openAssignModal(ticketID) {
   try {
     const agents = await api('/users/agents');
@@ -942,9 +1386,9 @@ async function openAssignModal(ticketID) {
   } catch(e) { alert('Error: ' + e.message); }
 }
 
-// ────────────────────────────────────────────────────────
-// Raise Ticket (with dynamic fields)
-// ────────────────────────────────────────────────────────
+// ──────────────────────────────────────────────────────────
+// Raise Ticket  (UNCHANGED)
+// ──────────────────────────────────────────────────────────
 async function raiseTicket() {
   const brokerID   = document.getElementById('nt-broker').value;
   const categoryEl = document.getElementById('nt-category');
@@ -962,7 +1406,6 @@ async function raiseTicket() {
     return;
   }
 
-  // Collect dynamic fields
   const dynamicFields = {};
   const fieldDefs = CATEGORY_FIELDS[categoryName.toLowerCase()] || [];
   for (const fd of fieldDefs) {
@@ -985,27 +1428,26 @@ async function raiseTicket() {
     });
     alert(`Ticket ${res.ticketID} raised successfully!`);
 
-    // Reset form
     ['nt-broker','nt-category','nt-subissue','nt-priority'].forEach(id => document.getElementById(id).value = '');
     ['nt-heading','nt-remarks','nt-account'].forEach(id => document.getElementById(id).value = '');
     document.getElementById('nt-subissue').innerHTML = '<option value="">Select category first…</option>';
     document.getElementById('nt-dynamic-fields').style.display = 'none';
     document.getElementById('nt-dynamic-grid').innerHTML = '';
 
-    // Switch to All Tickets tab
     document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.querySelector('[data-page="tickets"]').classList.add('active');
     document.getElementById('page-tickets').classList.add('active');
+    document.getElementById('topbar-title').textContent = 'All Tickets';
     loadTickets();
   } catch(e) {
     document.getElementById('nt-err').textContent = e.message;
   }
 }
 
-// ────────────────────────────────────────────────────────
-// Reports
-// ────────────────────────────────────────────────────────
+// ──────────────────────────────────────────────────────────
+// Reports  (UNCHANGED)
+// ──────────────────────────────────────────────────────────
 async function loadReports() {
   try {
     const [brokers, cats] = await Promise.all([
@@ -1015,34 +1457,34 @@ async function loadReports() {
 
     document.getElementById('broker-tbody').innerHTML = brokers.length
       ? brokers.map(b => `<tr>
-          <td>${b.BrokerName}</td>
-          <td>${b.ContactPerson || '—'}</td>
+          <td style="font-weight:600">${b.BrokerName}</td>
+          <td style="color:var(--muted2)">${b.ContactPerson || '—'}</td>
           <td><strong>${b.TotalTickets}</strong></td>
           <td style="color:var(--open)">${b.OpenTickets}</td>
           <td style="color:var(--inprogress)">${b.InProgress}</td>
           <td style="color:var(--resolved)">${b.Resolved}</td>
           <td style="color:var(--critical)">${b.CriticalTickets}</td>
           <td style="color:var(--sla-breach)">${b.SLABreached}</td>
-          <td>${b.AvgResolutionMinutes != null ? fmtMins(b.AvgResolutionMinutes) : '—'}</td>
+          <td style="color:var(--muted2)">${b.AvgResolutionMinutes != null ? fmtMins(b.AvgResolutionMinutes) : '—'}</td>
         </tr>`).join('')
-      : `<tr><td colspan="9" class="empty">No data</td></tr>`;
+      : `<tr><td colspan="9" class="empty"></td></tr>`;
 
     const categories = cats.categories || [];
     document.getElementById('category-tbody').innerHTML = categories.length
       ? categories.map(c => `<tr>
-          <td>${c.CategoryName}</td>
+          <td style="font-weight:600">${c.CategoryName}</td>
           <td>${c.SLAHours}h</td>
           <td>—</td><td>—</td><td>—</td><td>—</td>
         </tr>`).join('')
-      : `<tr><td colspan="6" class="empty">No data</td></tr>`;
+      : `<tr><td colspan="6" class="empty"></td></tr>`;
   } catch(e) {
     console.error('loadReports error:', e);
   }
 }
 
-// ────────────────────────────────────────────────────────
-// Download PPTX
-// ────────────────────────────────────────────────────────
+// ──────────────────────────────────────────────────────────
+// Download PPTX  (UNCHANGED)
+// ──────────────────────────────────────────────────────────
 async function downloadPPTX() {
   const btn = event.target;
   btn.textContent = '⏳ Generating…';
@@ -1058,10 +1500,8 @@ async function downloadPPTX() {
     const blob = await res.blob();
     const url  = URL.createObjectURL(blob);
     const a    = document.createElement('a');
-    a.href     = url;
-    a.download = `TMS_Weekly_Report_${new Date().toISOString().split('T')[0]}.pptx`;
-    a.click();
-    URL.revokeObjectURL(url);
+    a.href = url; a.download = `TMS_Weekly_Report_${new Date().toISOString().split('T')[0]}.pptx`;
+    a.click(); URL.revokeObjectURL(url);
   } catch(e) {
     alert('PPTX Error: ' + e.message);
   } finally {
@@ -1070,24 +1510,34 @@ async function downloadPPTX() {
   }
 }
 
-// ────────────────────────────────────────────────────────
-// Users
-// ────────────────────────────────────────────────────────
+// ──────────────────────────────────────────────────────────
+// Users  (UNCHANGED)
+// ──────────────────────────────────────────────────────────
 async function loadUsers() {
   try {
     const users = await api('/users');
     document.getElementById('users-tbody').innerHTML = users.length
       ? users.map(u => `<tr>
-          <td>${u.FullName}</td>
-          <td>${u.Email}</td>
-          <td><span class="badge badge-${u.Role}">${u.Role}</span></td>
-          <td style="color:${u.IsActive ? 'var(--low)':'var(--critical)'}">${u.IsActive ? 'Active' : 'Inactive'}</td>
-          <td>${new Date(u.CreatedAt).toLocaleDateString('en-IN')}</td>
-          <td><button class="btn btn-sm btn-warning" onclick="toggleUser(${u.UserID})">${u.IsActive ? 'Deactivate':'Activate'}</button></td>
+          <td style="font-weight:600">${u.FullName}</td>
+          <td style="color:var(--muted2)">${u.Email}</td>
+          <td>${badge('', u.Role)}</td>
+          <td>
+            <span style="display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:${u.IsActive ? 'var(--low)':'var(--critical)'}">
+              <span style="width:6px;height:6px;border-radius:50%;background:currentColor"></span>
+              ${u.IsActive ? 'Active' : 'Inactive'}
+            </span>
+          </td>
+          <td style="color:var(--muted2)">${new Date(u.CreatedAt).toLocaleDateString('en-IN')}</td>
+          <td>
+            <button class="btn btn-sm ${u.IsActive ? 'btn-ghost' : 'btn-success'}" onclick="toggleUser(${u.UserID})">
+              ${u.IsActive ? 'Deactivate' : 'Activate'}
+            </button>
+          </td>
         </tr>`).join('')
-      : `<tr><td colspan="6" class="empty">No users</td></tr>`;
+      : `<tr><td colspan="6" class="empty"></td></tr>`;
   } catch(e) {
-    document.getElementById('users-tbody').innerHTML = `<tr><td colspan="6" class="empty">Error: ${e.message}</td></tr>`;
+    document.getElementById('users-tbody').innerHTML =
+      `<tr><td colspan="6" style="text-align:center;padding:32px;color:var(--critical)">Error: ${e.message}</td></tr>`;
   }
 }
 
@@ -1114,36 +1564,31 @@ async function toggleUser(id) {
   } catch(e) { alert('Error: ' + e.message); }
 }
 
-// ────────────────────────────────────────────────────────
-// Export Excel / PDF
-// ────────────────────────────────────────────────────────
+// ──────────────────────────────────────────────────────────
+// Export  (UNCHANGED)
+// ──────────────────────────────────────────────────────────
 function exportFile(type) {
   fetch(`/api/export/${type}`, { headers: { Authorization: `Bearer ${token}` } })
     .then(r => r.blob())
     .then(blob => {
       const url = URL.createObjectURL(blob);
       const a   = document.createElement('a');
-      a.href     = url;
+      a.href = url;
       a.download = type === 'excel' ? 'tickets.xlsx' : 'tickets.pdf';
-      a.click();
-      URL.revokeObjectURL(url);
+      a.click(); URL.revokeObjectURL(url);
     })
     .catch(e => alert('Export failed: ' + e.message));
 }
 
-// ────────────────────────────────────────────────────────
-// Close modals on overlay click
-// ────────────────────────────────────────────────────────
+// ──────────────────────────────────────────────────────────
+// Modal overlay click to close
+// ──────────────────────────────────────────────────────────
 document.querySelectorAll('.modal-overlay').forEach(el => {
   el.addEventListener('click', e => { if (e.target === el) el.classList.remove('open'); });
 });
 
-// ────────────────────────────────────────────────────────
 // Auto-init if token exists
-// ────────────────────────────────────────────────────────
-if (token && me) {
-  initApp();
-}
+if (token && me) { initApp(); }
 </script>
 </body>
 </html>
