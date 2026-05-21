@@ -168,15 +168,15 @@ router.post('/', auth, async (req, res) => {
     );
     const slaHours = catRows.length ? catRows[0].sla_hours : 24;
     await client.query(`
-      INSERT INTO tickets (
-        ticket_id, broker_id, category_id, sub_issue_id,
-        heading, remarks, client_account_id, priority,
-        status, raised_by_user_id, sla_deadline
-      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'open',$9, NOW() + ($10 || ' hours')::INTERVAL)`,
-      [ticketID, brokerID, +categoryID, +subIssueID,
-       heading, remarks, clientAccountID || null, priority.toLowerCase(),
-       req.user.userID, slaHours]
-    );
+  INSERT INTO tickets (
+    ticket_id, broker_id, category_id, sub_issue_id,
+    heading, remarks, client_account_id, priority,
+    status, raised_by_user_id, sla_deadline
+  ) VALUES ($1::text,$2,$3,$4,$5,$6,$7,$8::text,'open',$9, NOW() + ($10::text || ' hours')::INTERVAL)`,
+  [ticketID, brokerID, +categoryID, +subIssueID,
+   heading, remarks, clientAccountID || null, priority.toLowerCase(),
+   req.user.userID, slaHours]
+);
     await client.query(
       `INSERT INTO ticket_timeline (ticket_id, action_by, action_type, action_note) VALUES ($1,$2,'raised','Ticket raised')`,
       [ticketID, req.user.userID]
