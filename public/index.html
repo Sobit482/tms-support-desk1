@@ -511,6 +511,82 @@ hr { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
   max-width: 200px; overflow: hidden;
   text-overflow: ellipsis; white-space: nowrap;
 }
+
+/* ── Donut Charts ───────────────────────────────────────── */
+.charts-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.chart-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.chart-card h4 {
+  font-size: 11px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .6px;
+  color: var(--muted); margin-bottom: 16px;
+  align-self: flex-start;
+}
+.donut-wrap {
+  position: relative;
+  width: 160px; height: 160px;
+  margin-bottom: 16px;
+}
+.donut-wrap canvas { cursor: pointer; }
+.donut-center {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  pointer-events: none;
+}
+.donut-center .dc-num {
+  font-size: 26px; font-weight: 700;
+  font-family: 'DM Mono', monospace;
+  color: var(--text);
+}
+.donut-center .dc-label {
+  font-size: 10px; color: var(--muted);
+  text-transform: uppercase; letter-spacing: .4px;
+}
+.chart-legend {
+  display: flex; flex-wrap: wrap;
+  gap: 8px 16px; justify-content: center;
+}
+.legend-item {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 11px; color: var(--muted2);
+  cursor: pointer; transition: color .15s;
+}
+.legend-item:hover { color: var(--text); }
+.legend-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%; flex-shrink: 0;
+}
+
+/* ── Reports date filter ────────────────────────────────── */
+.report-filter {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 18px;
+  display: flex; gap: 12px; align-items: flex-end;
+  margin-bottom: 16px; flex-wrap: wrap;
+}
+.report-filter .fg { display: flex; flex-direction: column; gap: 5px; }
+.report-filter .fg label {
+  font-size: 10px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .6px; color: var(--muted);
+}
+.report-filter input[type=date] {
+  width: auto; min-width: 140px; padding: 8px 12px; font-size: 13px;
+}
 </style>
 </head>
 <body>
@@ -536,7 +612,22 @@ hr { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
       </div>
       <button class="btn btn-primary btn-full" onclick="doLogin()">Sign In →</button>
       <div id="login-err" class="err-msg"></div>
+      <p class="hint" style="margin-top:10px">
+        <a href="#" onclick="showForgotPassword(event)" style="color:var(--accent2);text-decoration:none;font-size:12px">Forgot password?</a>
+      </p>
       <p class="hint">Default: admin@tms.com / Admin@123</p>
+    </div>
+
+    <!-- Forgot Password Panel -->
+    <div id="forgot-panel" class="login-box" style="display:none;margin-top:16px">
+      <div style="font-size:13px;font-weight:700;margin-bottom:14px;color:var(--text)">🔑 Reset Password</div>
+      <div class="form-group">
+        <label>Your Email Address</label>
+        <input type="email" id="fp-email" placeholder="you@tms.com"/>
+      </div>
+      <button class="btn btn-primary btn-full" onclick="submitForgotPassword()">Send Reset Link</button>
+      <div id="fp-msg" style="font-size:12px;margin-top:10px;text-align:center"></div>
+      <p class="hint"><a href="#" onclick="hideForgotPassword(event)" style="color:var(--muted2);text-decoration:none;font-size:12px">← Back to login</a></p>
     </div>
   </div>
 </div>
@@ -637,6 +728,31 @@ hr { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
         <div class="stat-card" style="--stat-color:var(--sla-breach)">
           <div class="num" id="s-breached">—</div>
           <div class="label">SLA Breached</div>
+        </div>
+      </div>
+
+      <div class="charts-row">
+        <div class="chart-card">
+          <h4>Tickets by Status</h4>
+          <div class="donut-wrap">
+            <canvas id="chart-status" width="160" height="160"></canvas>
+            <div class="donut-center">
+              <span class="dc-num" id="dc-status-num">0</span>
+              <span class="dc-label" id="dc-status-label">Total</span>
+            </div>
+          </div>
+          <div class="chart-legend" id="legend-status"></div>
+        </div>
+        <div class="chart-card">
+          <h4>Tickets by Priority</h4>
+          <div class="donut-wrap">
+            <canvas id="chart-priority" width="160" height="160"></canvas>
+            <div class="donut-center">
+              <span class="dc-num" id="dc-priority-num">0</span>
+              <span class="dc-label" id="dc-priority-label">Total</span>
+            </div>
+          </div>
+          <div class="chart-legend" id="legend-priority"></div>
         </div>
       </div>
 
@@ -803,6 +919,18 @@ hr { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
       </div>
 
       <div class="section-h">Broker Summary</div>
+      <div class="report-filter">
+        <div class="fg">
+          <label>From Date</label>
+          <input type="date" id="rpt-from"/>
+        </div>
+        <div class="fg">
+          <label>To Date</label>
+          <input type="date" id="rpt-to"/>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="loadReports()">Apply</button>
+        <button class="btn btn-ghost btn-sm" onclick="clearReportFilter()">Clear</button>
+      </div>
       <div class="table-wrap" style="margin-bottom:28px">
         <table>
           <thead>
@@ -961,6 +1089,7 @@ const CATEGORY_FIELDS = {
   'collateral issue': [{key:'CollateralAmount',label:'Collateral Amount to Release',required:true},{key:'ClientCode',label:'Client Code',required:true},{key:'Script',label:'Script / Security',required:false}],
   'payment pending':  [{key:'ClientCode',label:'Client Code',required:true},{key:'Amount',label:'Amount',required:true},{key:'BankRef',label:'Bank Reference',required:false}],
   'deactivation':     [{key:'ClientCode',label:'Client Code',required:true},{key:'BOID',label:'BOID',required:false}],
+  'bill revert':      [{key:'ClientCode',label:'Client Code',required:true},{key:'BusinessDate',label:'Business Date',required:true},{key:'BillAmount',label:'Bill Amount',required:true}],
 };
 
 const API = '/api';
@@ -1132,6 +1261,112 @@ function onCategoryChange() {
 // ──────────────────────────────────────────────────────────
 // Dashboard  (UNCHANGED)
 // ──────────────────────────────────────────────────────────
+// ── Donut chart engine ──────────────────────────────────────
+let chartStatusInstance = null;
+let chartPriorityInstance = null;
+
+function drawDonut(canvasId, segments, centerNumId, centerLabelId, legendId, defaultLabel) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const total = segments.reduce((s, seg) => s + seg.value, 0);
+  document.getElementById(centerNumId).textContent = total;
+  document.getElementById(centerLabelId).textContent = defaultLabel;
+
+  const legend = document.getElementById(legendId);
+  legend.innerHTML = segments.map(s => `
+    <div class="legend-item" onclick="filterBySegment('${canvasId}','${s.filter}','${s.filterVal}')">
+      <div class="legend-dot" style="background:${s.color}"></div>
+      ${s.label}: <strong style="color:var(--text)">${s.value}</strong>
+    </div>`).join('');
+
+  const size = 160, cx = size/2, cy = size/2, r = 62, inner = 42;
+  ctx.clearRect(0, 0, size, size);
+
+  if (total === 0) {
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI*2);
+    ctx.arc(cx, cy, inner, Math.PI*2, 0, true);
+    ctx.fillStyle = 'rgba(255,255,255,0.05)';
+    ctx.fill();
+    return;
+  }
+
+  let startAngle = -Math.PI / 2;
+  const arcs = [];
+  segments.forEach(seg => {
+    const slice = (seg.value / total) * Math.PI * 2;
+    arcs.push({ ...seg, startAngle, endAngle: startAngle + slice });
+    startAngle += slice;
+  });
+
+  arcs.forEach(arc => {
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.arc(cx, cy, r, arc.startAngle, arc.endAngle);
+    ctx.arc(cx, cy, inner, arc.endAngle, arc.startAngle, true);
+    ctx.closePath();
+    ctx.fillStyle = arc.color;
+    ctx.fill();
+  });
+
+  canvas.onclick = function(e) {
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left - cx;
+    const my = e.clientY - rect.top - cy;
+    const dist = Math.sqrt(mx*mx + my*my);
+    if (dist < inner || dist > r) return;
+    let angle = Math.atan2(my, mx);
+    if (angle < -Math.PI/2) angle += Math.PI*2;
+    const clicked = arcs.find(a => {
+      let sa = a.startAngle < -Math.PI/2 ? a.startAngle + Math.PI*2 : a.startAngle;
+      let ea = a.endAngle < -Math.PI/2 ? a.endAngle + Math.PI*2 : a.endAngle;
+      if (ea < sa) ea += Math.PI*2;
+      let ang = angle < sa ? angle + Math.PI*2 : angle;
+      return ang >= sa && ang <= ea;
+    });
+    if (clicked) filterBySegment(canvasId, clicked.filter, clicked.filterVal);
+  };
+}
+
+function filterBySegment(chartId, filter, val) {
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelector('[data-page="tickets"]').classList.add('active');
+  document.getElementById('page-tickets').classList.add('active');
+  document.getElementById('topbar-title').textContent = 'All Tickets';
+  if (filter === 'status')   { document.getElementById('f-status').value   = val; document.getElementById('f-priority').value = ''; }
+  if (filter === 'priority') { document.getElementById('f-priority').value = val; document.getElementById('f-status').value   = ''; }
+  loadTickets();
+}
+
+// ── Forgot Password ──────────────────────────────────────────
+function showForgotPassword(e) {
+  e.preventDefault();
+  document.getElementById('login-box-main') && (document.getElementById('login-box-main').style.display = 'none');
+  document.getElementById('forgot-panel').style.display = 'block';
+  document.getElementById('fp-msg').textContent = '';
+  document.getElementById('fp-email').value = '';
+}
+function hideForgotPassword(e) {
+  e.preventDefault();
+  document.getElementById('forgot-panel').style.display = 'none';
+}
+async function submitForgotPassword() {
+  const email = document.getElementById('fp-email').value.trim();
+  const msgEl = document.getElementById('fp-msg');
+  if (!email) { msgEl.style.color = 'var(--critical)'; msgEl.textContent = 'Please enter your email.'; return; }
+  msgEl.style.color = 'var(--muted2)'; msgEl.textContent = 'Sending…';
+  try {
+    await api('/auth/forgot-password', { method: 'POST', body: { email } });
+    msgEl.style.color = 'var(--resolved)';
+    msgEl.textContent = '✅ Reset link sent! Check your email.';
+  } catch(e) {
+    msgEl.style.color = 'var(--critical)';
+    msgEl.textContent = e.message || 'Failed to send reset email.';
+  }
+}
+
 async function loadDashboard() {
   try {
     const [overview, tickets] = await Promise.all([
@@ -1145,6 +1380,22 @@ async function loadDashboard() {
     document.getElementById('s-closed').textContent   = overview.Closed       ?? 0;
     document.getElementById('s-critical').textContent = overview.Critical     ?? 0;
     document.getElementById('s-breached').textContent = overview.SLABreached  ?? 0;
+
+    // Draw donut charts
+    drawDonut('chart-status', [
+      { label:'Open',       value: +(overview.OpenTickets||0), color:'#3b82f6', filter:'status', filterVal:'open' },
+      { label:'In Progress',value: +(overview.InProgress||0),  color:'#a855f7', filter:'status', filterVal:'inprogress' },
+      { label:'Resolved',   value: +(overview.Resolved||0),    color:'#22c55e', filter:'status', filterVal:'resolved' },
+      { label:'Closed',     value: +(overview.Closed||0),      color:'#64748b', filter:'status', filterVal:'closed' },
+      { label:'Rejected',   value: +(overview.Rejected||0),    color:'#ef4444', filter:'status', filterVal:'rejected' },
+    ], 'dc-status-num', 'dc-status-label', 'legend-status', 'Total');
+
+    drawDonut('chart-priority', [
+      { label:'Critical', value: +(overview.Critical||0),                                                                                              color:'#ef4444', filter:'priority', filterVal:'critical' },
+      { label:'High',     value: Math.max(0, +(overview.TotalTickets||0) - +(overview.Critical||0) - +(overview.Medium||0) - +(overview.Low||0)),      color:'#f97316', filter:'priority', filterVal:'high' },
+      { label:'Medium',   value: +(overview.Medium||0),                                                                                                color:'#eab308', filter:'priority', filterVal:'medium' },
+      { label:'Low',      value: +(overview.Low||0),                                                                                                   color:'#22c55e', filter:'priority', filterVal:'low' },
+    ], 'dc-priority-num', 'dc-priority-label', 'legend-priority', 'Total');
 
     const recent = tickets.slice(0, 15);
     document.getElementById('dash-tbody').innerHTML = recent.length
@@ -1448,10 +1699,20 @@ async function raiseTicket() {
 // ──────────────────────────────────────────────────────────
 // Reports  (UNCHANGED)
 // ──────────────────────────────────────────────────────────
+function clearReportFilter() {
+  document.getElementById('rpt-from').value = '';
+  document.getElementById('rpt-to').value = '';
+  loadReports();
+}
+
 async function loadReports() {
   try {
+    const from = document.getElementById('rpt-from')?.value;
+    const to   = document.getElementById('rpt-to')?.value;
+    let brokerUrl = '/reports/broker-summary';
+    if (from && to) brokerUrl += `?dateFrom=${from}&dateTo=${to}`;
     const [brokers, cats] = await Promise.all([
-      api('/reports/broker-summary'),
+      api(brokerUrl),
       api('/categories')
     ]);
 

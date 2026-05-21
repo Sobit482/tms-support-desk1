@@ -4,6 +4,14 @@ const auth    = require('../middleware/auth');
 
 router.get('/broker-summary', auth, async (req, res) => {
   try {
+    const { dateFrom, dateTo } = req.query;
+    let dateFilter = '';
+    const params = [];
+    if (dateFrom && dateTo) {
+      params.push(new Date(dateFrom));
+      params.push(new Date(new Date(dateTo).setHours(23,59,59,999)));
+      dateFilter = `AND t.raised_at BETWEEN $1 AND $2`;
+    }
     const { rows } = await req.app.get('db').query(`
       SELECT b.broker_id                                                           AS "BrokerID",
              b.broker_name                                                         AS "BrokerName",
@@ -17,13 +25,14 @@ router.get('/broker-summary', auth, async (req, res) => {
         SUM(CASE WHEN t.sla_breached=true                THEN 1 ELSE 0 END)        AS "SLABreached",
         AVG(CASE WHEN t.closed_at IS NOT NULL
             THEN EXTRACT(EPOCH FROM (t.closed_at - t.raised_at))/60 ELSE NULL END) AS "AvgResolutionMinutes"
-      FROM brokers b LEFT JOIN tickets t ON b.broker_id=t.broker_id
+      FROM brokers b LEFT JOIN tickets t ON b.broker_id=t.broker_id ${dateFilter}
       WHERE b.is_active=true
       GROUP BY b.broker_id, b.broker_name, b.contact_person
-      ORDER BY "TotalTickets" DESC`
+      ORDER BY "TotalTickets" DESC`, params
     );
     res.json(rows);
   } catch (e) {
+    console.error(e.message);
     res.status(500).json({ error: 'Failed to load broker report' });
   }
 });
@@ -39,7 +48,10 @@ router.get('/overview', auth, async (req, res) => {
         SUM(CASE WHEN status='closed'     THEN 1 ELSE 0 END)            AS "Closed",
         SUM(CASE WHEN status='rejected'   THEN 1 ELSE 0 END)            AS "Rejected",
         SUM(CASE WHEN sla_breached=true   THEN 1 ELSE 0 END)            AS "SLABreached",
-        SUM(CASE WHEN priority='critical' THEN 1 ELSE 0 END)            AS "Critical"
+        SUM(CASE WHEN priority='critical' THEN 1 ELSE 0 END)            AS "Critical",
+        SUM(CASE WHEN priority='high'     THEN 1 ELSE 0 END)            AS "High",
+        SUM(CASE WHEN priority='medium'   THEN 1 ELSE 0 END)            AS "Medium",
+        SUM(CASE WHEN priority='low'      THEN 1 ELSE 0 END)            AS "Low"
       FROM tickets`
     );
     res.json(rows[0]);
