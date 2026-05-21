@@ -16,17 +16,16 @@ function getCategoryFields(cat) {
   return CATEGORY_FIELDS[cat.toLowerCase()] || [];
 }
 
-async function generateTicketID(db) {
+async function generateTicketID(client) {           // ← was (db)
   const dateStr = new Date().toISOString().slice(0,10).replace(/-/g,'');
   const prefix  = `TKT-${dateStr}-`;
-  const { rows } = await db.query(
-    `SELECT ticket_id FROM tickets WHERE ticket_id LIKE $1 ORDER BY ticket_id DESC LIMIT 1`,
+  const { rows } = await client.query(
+    `SELECT ticket_id FROM tickets WHERE ticket_id LIKE $1 ORDER BY ticket_id DESC LIMIT 1 FOR UPDATE`,
     [`${prefix}%`]
   );
   const seq = rows.length ? parseInt(rows[0].ticket_id.slice(-3)) + 1 : 1;
   return `${prefix}${String(seq).padStart(3,'0')}`;
 }
-
 router.get('/category-fields', auth, (req, res) => {
   res.json(getCategoryFields(req.query.categoryName || ''));
 });
@@ -163,7 +162,7 @@ router.post('/', auth, async (req, res) => {
   const client = await db.connect();
   try {
     await client.query('BEGIN');
-    const ticketID = await generateTicketID(db);
+    const ticketID = await generateTicketID(client);
     const { rows: catRows } = await client.query(
       `SELECT sla_hours FROM ticket_categories WHERE category_id=$1`, [+categoryID]
     );
