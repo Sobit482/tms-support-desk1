@@ -297,4 +297,30 @@ router.patch('/:id/assign', auth(['admin','technical']), async (req, res) => {
   }
 });
 
+router.delete('/:id', auth(['admin']), async (req, res) => {
+  const db = req.app.get('db');
+  const client = await db.connect();
+  try {
+    await client.query('BEGIN');
+    const { rows } = await client.query(
+      `SELECT ticket_id FROM tickets WHERE ticket_id=$1`, [req.params.id]
+    );
+    if (!rows.length) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ error: 'Ticket not found' });
+    }
+    await client.query(`DELETE FROM ticket_fields   WHERE ticket_id=$1`, [req.params.id]);
+    await client.query(`DELETE FROM ticket_timeline WHERE ticket_id=$1`, [req.params.id]);
+    await client.query(`DELETE FROM tickets          WHERE ticket_id=$1`, [req.params.id]);
+    await client.query('COMMIT');
+    res.json({ message: 'Ticket deleted successfully' });
+  } catch (e) {
+    await client.query('ROLLBACK');
+    console.error(e.message);
+    res.status(500).json({ error: e.message });
+  } finally {
+    client.release();
+  }
+});
+
 module.exports = router;
