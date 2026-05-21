@@ -1539,13 +1539,14 @@ async function loadDashboard() {
       api('/reports/overview'),
       api('/tickets')
     ]);
-    document.getElementById('s-total').textContent    = overview.TotalTickets ?? 0;
-    document.getElementById('s-open').textContent     = overview.OpenTickets  ?? 0;
-    document.getElementById('s-inprog').textContent   = overview.InProgress   ?? 0;
-    document.getElementById('s-resolved').textContent = overview.Resolved     ?? 0;
-    document.getElementById('s-closed').textContent   = overview.Closed       ?? 0;
-    document.getElementById('s-critical').textContent = overview.Critical     ?? 0;
-    document.getElementById('s-breached').textContent = overview.SLABreached  ?? 0;
+   const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val ?? 0; };
+set('s-total',    overview.TotalTickets);
+set('s-open',     overview.OpenTickets);
+set('s-inprog',   overview.InProgress);
+set('s-resolved', overview.Resolved);
+set('s-closed',   overview.Closed);
+set('s-critical', overview.Critical);
+set('s-breached', overview.SLABreached);
 
     // Draw donut charts
     drawDonut('chart-status', [
