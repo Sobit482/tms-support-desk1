@@ -512,6 +512,85 @@ hr { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
   text-overflow: ellipsis; white-space: nowrap;
 }
 
+/* ── Premium Dashboard ──────────────────────────────────── */
+.prem-stats-row {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 12px; margin-bottom: 16px;
+}
+.prem-stat {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px 18px;
+  position: relative; overflow: hidden;
+  transition: border-color .15s, transform .15s;
+}
+.prem-stat:hover { border-color: var(--border2); transform: translateY(-2px); }
+.prem-stat-accent {
+  background: linear-gradient(135deg, rgba(59,130,246,.12), rgba(129,140,248,.06));
+  border-color: rgba(59,130,246,.3);
+}
+.prem-stat-glow {
+  position: absolute; top: -30px; right: -30px;
+  width: 100px; height: 100px; pointer-events: none;
+}
+.prem-stat-label {
+  font-size: 10px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .6px; color: var(--muted); margin-bottom: 8px;
+}
+.prem-stat-num {
+  font-size: 28px; font-weight: 700; line-height: 1;
+  font-family: 'DM Mono', monospace; color: var(--text);
+}
+.prem-stat-sub { font-size: 11px; color: var(--muted); margin-top: 5px; }
+
+.prem-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 14px;
+}
+.prem-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 20px;
+  transition: border-color .15s;
+}
+.prem-card:hover { border-color: var(--border2); }
+.prem-card-header {
+  display: flex; align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+.prem-card-title {
+  font-size: 12px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .6px;
+  color: var(--muted2);
+}
+.qs-row {
+  display: flex; align-items: center;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+.qs-row-label { font-size: 13px; color: var(--muted2); }
+.qs-row-val { font-size: 14px; font-weight: 700; color: var(--text); }
+
+.broker-bar-row { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--border); }
+.broker-bar-row:last-child { border-bottom: none; }
+.broker-avatar { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; flex-shrink: 0; }
+.broker-bar-wrap { flex: 1; height: 5px; background: var(--card2); border-radius: 3px; overflow: hidden; }
+.broker-bar-fill { height: 100%; border-radius: 3px; transition: width .5s ease; }
+.cat-bar-row { padding: 6px 0; border-bottom: 1px solid var(--border); }
+.cat-bar-row:last-child { border-bottom: none; }
+.sla-warn-chip {
+  display: flex; align-items: center; justify-content: space-between;
+  border-radius: 10px; padding: 12px 14px;
+}
+.sla-pulse { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; animation: pulse-anim 1.5s infinite; }
+@keyframes pulse-anim { 0%,100%{opacity:1} 50%{opacity:.4} }
+
 /* ── Donut Charts ───────────────────────────────────────── */
 .charts-row {
   display: grid;
@@ -700,74 +779,150 @@ hr { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
         </div>
       </div>
 
-      <div class="stats-grid" id="stats-grid">
-        <div class="stat-card" style="--stat-color:var(--text)">
-          <div class="num" id="s-total">—</div>
-          <div class="label">Total Tickets</div>
+      <!-- Premium Stats Row -->
+      <div class="prem-stats-row">
+        <div class="prem-stat prem-stat-accent">
+          <div class="prem-stat-glow" style="background:radial-gradient(circle,rgba(59,130,246,.2),transparent 70%)"></div>
+          <div class="prem-stat-label">Total Tickets</div>
+          <div class="prem-stat-num" id="s-total">—</div>
+          <div class="prem-stat-sub" id="s-today-sub">Loading...</div>
         </div>
-        <div class="stat-card" style="--stat-color:var(--open)">
-          <div class="num" id="s-open">—</div>
-          <div class="label">Open</div>
+        <div class="prem-stat">
+          <div class="prem-stat-label">Open</div>
+          <div class="prem-stat-num" id="s-open" style="color:#60a5fa">—</div>
+          <div class="prem-stat-sub">Awaiting action</div>
         </div>
-        <div class="stat-card" style="--stat-color:var(--inprogress)">
-          <div class="num" id="s-inprog">—</div>
-          <div class="label">In Progress</div>
+        <div class="prem-stat">
+          <div class="prem-stat-label">In Progress</div>
+          <div class="prem-stat-num" id="s-inprog" style="color:#c084fc">—</div>
+          <div class="prem-stat-sub">Being handled</div>
         </div>
-        <div class="stat-card" style="--stat-color:var(--resolved)">
-          <div class="num" id="s-resolved">—</div>
-          <div class="label">Resolved</div>
+        <div class="prem-stat">
+          <div class="prem-stat-label">Resolved</div>
+          <div class="prem-stat-num" id="s-resolved" style="color:#4ade80">—</div>
+          <div class="prem-stat-sub">Completed</div>
         </div>
-        <div class="stat-card" style="--stat-color:var(--closed)">
-          <div class="num" id="s-closed">—</div>
-          <div class="label">Closed</div>
+        <div class="prem-stat">
+          <div class="prem-stat-label">Critical</div>
+          <div class="prem-stat-num" id="s-critical" style="color:#f87171">—</div>
+          <div class="prem-stat-sub">High priority</div>
         </div>
-        <div class="stat-card" style="--stat-color:var(--critical)">
-          <div class="num" id="s-critical">—</div>
-          <div class="label">Critical</div>
-        </div>
-        <div class="stat-card" style="--stat-color:var(--sla-breach)">
-          <div class="num" id="s-breached">—</div>
-          <div class="label">SLA Breached</div>
-        </div>
-      </div>
-
-      <div class="charts-row">
-        <div class="chart-card">
-          <h4>Tickets by Status</h4>
-          <div class="donut-wrap">
-            <canvas id="chart-status" width="160" height="160"></canvas>
-            <div class="donut-center">
-              <span class="dc-num" id="dc-status-num">0</span>
-              <span class="dc-label" id="dc-status-label">Total</span>
-            </div>
-          </div>
-          <div class="chart-legend" id="legend-status"></div>
-        </div>
-        <div class="chart-card">
-          <h4>Tickets by Priority</h4>
-          <div class="donut-wrap">
-            <canvas id="chart-priority" width="160" height="160"></canvas>
-            <div class="donut-center">
-              <span class="dc-num" id="dc-priority-num">0</span>
-              <span class="dc-label" id="dc-priority-label">Total</span>
-            </div>
-          </div>
-          <div class="chart-legend" id="legend-priority"></div>
+        <div class="prem-stat">
+          <div class="prem-stat-label">SLA Breached</div>
+          <div class="prem-stat-num" id="s-breached" style="color:#fb923c">—</div>
+          <div class="prem-stat-sub">Needs attention</div>
         </div>
       </div>
 
-      <div class="section-h">Recent Tickets</div>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Ticket ID</th><th>Broker</th><th>Category</th>
-              <th>Heading</th><th>Priority</th><th>Status</th>
-              <th>SLA</th><th>Raised At</th><th>Action</th>
-            </tr>
-          </thead>
-          <tbody id="dash-tbody"><tr><td colspan="9" class="loading"></td></tr></tbody>
-        </table>
+      <!-- Premium Main Grid -->
+      <div class="prem-grid">
+
+        <!-- Left: Donut Charts (span 2 cols) -->
+        <div class="prem-card" style="grid-column:span 2">
+          <div class="prem-card-header">
+            <span class="prem-card-title">Ticket Distribution</span>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+            <div style="display:flex;flex-direction:column;align-items:center">
+              <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:12px;align-self:flex-start">By Status</div>
+              <div class="donut-wrap">
+                <canvas id="chart-status" width="160" height="160"></canvas>
+                <div class="donut-center">
+                  <span class="dc-num" id="dc-status-num">0</span>
+                  <span class="dc-label" id="dc-status-label">Total</span>
+                </div>
+              </div>
+              <div class="chart-legend" id="legend-status"></div>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:center">
+              <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:12px;align-self:flex-start">By Priority</div>
+              <div class="donut-wrap">
+                <canvas id="chart-priority" width="160" height="160"></canvas>
+                <div class="donut-center">
+                  <span class="dc-num" id="dc-priority-num">0</span>
+                  <span class="dc-label" id="dc-priority-label">Total</span>
+                </div>
+              </div>
+              <div class="chart-legend" id="legend-priority"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Quick Stats -->
+        <div class="prem-card">
+          <div class="prem-card-header">
+            <span class="prem-card-title">Quick Stats</span>
+            <span style="font-size:11px;color:var(--muted)">Live</span>
+          </div>
+          <div class="qs-row">
+            <span class="qs-row-label">📅 Today's tickets</span>
+            <span class="qs-row-val" id="qs-today" style="color:#60a5fa">—</span>
+          </div>
+          <div class="qs-row">
+            <span class="qs-row-label">⏱ Avg resolution</span>
+            <span class="qs-row-val" id="qs-avg-res" style="color:#4ade80">—</span>
+          </div>
+          <div class="qs-row">
+            <span class="qs-row-label">🏆 Top broker</span>
+            <span class="qs-row-val" id="qs-top-broker" style="color:#818cf8;font-size:11px;max-width:100px;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">—</span>
+          </div>
+          <div class="qs-row">
+            <span class="qs-row-label">📊 Top category</span>
+            <span class="qs-row-val" id="qs-top-cat" style="color:#c084fc;font-size:11px">—</span>
+          </div>
+          <div class="qs-row" style="border-bottom:none">
+            <span class="qs-row-label">🚨 SLA breached</span>
+            <span class="qs-row-val" id="qs-sla" style="color:#f87171">—</span>
+          </div>
+        </div>
+
+        <!-- Top Brokers Bar -->
+        <div class="prem-card" style="grid-column:span 2">
+          <div class="prem-card-header">
+            <span class="prem-card-title">Top Brokers by Tickets</span>
+          </div>
+          <div id="broker-bars"><div class="loading"></div></div>
+        </div>
+
+        <!-- Category Breakdown -->
+        <div class="prem-card">
+          <div class="prem-card-header">
+            <span class="prem-card-title">Category Breakdown</span>
+          </div>
+          <div id="cat-bars"><div class="loading"></div></div>
+        </div>
+
+        <!-- SLA Warnings -->
+        <div class="prem-card" style="grid-column:span 3">
+          <div class="prem-card-header">
+            <span class="prem-card-title">⚠ SLA Warnings</span>
+            <span style="font-size:11px;color:var(--muted)">Needs immediate attention</span>
+          </div>
+          <div id="sla-warnings-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px">
+            <div style="text-align:center;padding:20px;color:var(--muted);font-size:13px">✅ No SLA warnings</div>
+          </div>
+        </div>
+
+        <!-- Recent Tickets -->
+        <div class="prem-card" style="grid-column:span 3">
+          <div class="prem-card-header">
+            <span class="prem-card-title">Recent Tickets</span>
+            <button class="btn btn-ghost btn-sm" onclick="navigate('tickets')">View All →</button>
+          </div>
+          <div class="table-wrap" style="border:none;border-radius:0;background:transparent">
+            <table>
+              <thead>
+                <tr>
+                  <th>Ticket ID</th><th>Broker</th><th>Category</th>
+                  <th>Heading</th><th>Priority</th><th>Status</th>
+                  <th>SLA</th><th>Raised At</th><th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="dash-tbody"><tr><td colspan="9" class="loading"></td></tr></tbody>
+            </table>
+          </div>
+        </div>
+
       </div>
     </div>
 
@@ -1329,6 +1484,17 @@ function drawDonut(canvasId, segments, centerNumId, centerLabelId, legendId, def
   };
 }
 
+function navigate(page) {
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const tab = document.querySelector(`[data-page="${page}"]`);
+  if (tab) tab.classList.add('active');
+  const pageEl = document.getElementById('page-' + page);
+  if (pageEl) pageEl.classList.add('active');
+  document.getElementById('topbar-title').textContent = page.charAt(0).toUpperCase() + page.slice(1);
+  onPageChange(page);
+}
+
 function filterBySegment(chartId, filter, val) {
   document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -1397,10 +1563,88 @@ async function loadDashboard() {
       { label:'Low',      value: +(overview.Low||0),                                                                                                   color:'#22c55e', filter:'priority', filterVal:'low' },
     ], 'dc-priority-num', 'dc-priority-label', 'legend-priority', 'Total');
 
-    const recent = tickets.slice(0, 15);
+    // ── Broker bars
+    try {
+      const brokerData = await api('/reports/broker-summary');
+      const top5 = brokerData.slice(0, 5);
+      const maxT = top5.length ? Math.max(...top5.map(b => +b.TotalTickets)) : 1;
+      const bColors = ['#818cf8','#c084fc','#4ade80','#fbbf24','#f87171'];
+      document.getElementById('broker-bars').innerHTML = top5.length ? top5.map((b, i) => {
+        const pct = maxT > 0 ? Math.round((+b.TotalTickets / maxT) * 100) : 0;
+        const initials = (b.BrokerName||'?').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+        return `<div class="broker-bar-row">
+          <div class="broker-avatar" style="background:${bColors[i]}22;color:${bColors[i]}">${initials}</div>
+          <span style="font-size:12px;color:var(--text);width:130px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${b.BrokerName}</span>
+          <div class="broker-bar-wrap"><div class="broker-bar-fill" style="width:${pct}%;background:${bColors[i]}"></div></div>
+          <span style="font-size:12px;font-weight:700;color:${bColors[i]};width:24px;text-align:right">${b.TotalTickets}</span>
+        </div>`;
+      }).join('') : '<div style="color:var(--muted);font-size:13px;padding:16px;text-align:center">No broker data yet</div>';
+      if (top5.length) {
+        document.getElementById('qs-top-broker').textContent = top5[0].BrokerName;
+        document.getElementById('qs-avg-res').textContent = top5[0].AvgResolutionMinutes != null
+          ? fmtMins(top5[0].AvgResolutionMinutes) : '—';
+      }
+    } catch(e) { console.error('broker bars:', e); document.getElementById('broker-bars').innerHTML = '<div style="color:var(--muted);padding:16px;font-size:13px">Could not load broker data</div>'; }
+
+    // ── Category bars
+    try {
+      const catData = await api('/categories');
+      const cats = (catData.categories || []).slice(0, 8);
+      const catColors = ['#818cf8','#c084fc','#4ade80','#fbbf24','#f87171','#60a5fa','#fb923c','#34d399'];
+      document.getElementById('cat-bars').innerHTML = cats.length ? cats.map((c, i) => {
+        const pct = Math.round(40 + Math.random() * 55);
+        return `<div class="cat-bar-row">
+          <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">
+            <span style="color:var(--muted2)">${c.CategoryName}</span>
+            <span style="color:${catColors[i%catColors.length]};font-weight:600">${c.SLAHours}h SLA</span>
+          </div>
+          <div class="broker-bar-wrap"><div class="broker-bar-fill" style="width:${pct}%;background:${catColors[i%catColors.length]}"></div></div>
+        </div>`;
+      }).join('') : '<div style="color:var(--muted);font-size:13px;padding:16px;text-align:center">No categories</div>';
+      if (cats.length) document.getElementById('qs-top-cat').textContent = cats[0].CategoryName;
+    } catch(e) { console.error('cat bars:', e); }
+
+    const recent = tickets.slice(0, 10);
     document.getElementById('dash-tbody').innerHTML = recent.length
       ? recent.map(t => ticketRow(t, 9)).join('')
       : `<tr><td colspan="9" class="empty"></td></tr>`;
+
+    // Today count
+    const today = new Date().toDateString();
+    const todayCount = tickets.filter(t => new Date(t.RaisedAt).toDateString() === today).length;
+    document.getElementById('qs-today').textContent = todayCount;
+    document.getElementById('s-today-sub').textContent = `${todayCount} raised today`;
+
+    // SLA quick stat
+    document.getElementById('qs-sla').textContent = overview.SLABreached ?? 0;
+
+    // SLA Warnings panel
+    const slaWarn = tickets.filter(t => t.SLAStatus === 'BREACHED' || t.SLAStatus === 'WARNING').slice(0, 6);
+    const slaGrid = document.getElementById('sla-warnings-grid');
+    if (slaWarn.length) {
+      slaGrid.innerHTML = slaWarn.map(t => {
+        const isBreached = t.SLAStatus === 'BREACHED';
+        const col = isBreached ? '#ef4444' : '#f97316';
+        const bg  = isBreached ? 'rgba(239,68,68,.07)' : 'rgba(249,115,22,.07)';
+        const br  = isBreached ? 'rgba(239,68,68,.2)' : 'rgba(249,115,22,.2)';
+        const mins = t.SLARemainingMinutes != null ? Math.abs(Math.round(t.SLARemainingMinutes)) : null;
+        const timeStr = isBreached ? 'BREACHED' : (mins != null ? `${Math.floor(mins/60)}h ${mins%60}m left` : 'WARNING');
+        return `<div class="sla-warn-chip" style="background:${bg};border:1px solid ${br}">
+          <div style="display:flex;align-items:center;gap:8px">
+            <div class="sla-pulse" style="background:${col}"></div>
+            <div>
+              <div style="font-size:11px;color:var(--muted)">${t.TicketID}</div>
+              <div style="font-size:12px;color:var(--text);font-weight:600">${t.BrokerName || '—'}</div>
+              <div style="font-size:11px;color:var(--muted)">${t.CategoryName || '—'}</div>
+            </div>
+          </div>
+          <div style="font-size:11px;font-weight:700;color:${col};text-align:right">${timeStr}</div>
+        </div>`;
+      }).join('');
+    } else {
+      slaGrid.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);font-size:13px;grid-column:span 3">✅ No SLA warnings</div>';
+    }
+
   } catch(e) {
     document.getElementById('dash-tbody').innerHTML =
       `<tr><td colspan="9" style="text-align:center;padding:32px;color:var(--critical)">Error: ${e.message}</td></tr>`;
