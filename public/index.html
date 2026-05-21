@@ -2041,6 +2041,15 @@ async function selectTicket(id) {
           <button class="btn btn-warning btn-sm" onclick="openAssignModal('${id}')">Assign</button>
         ` : ''}
         <button class="btn btn-ghost btn-sm" onclick="openStatusModal('${id}','${t.Status}')">Update Status</button>
+        ${me && me.role === 'admin' ? `
+          <button class="btn btn-danger btn-sm" style="margin-left:auto;background:transparent;border:1px solid var(--critical);color:var(--critical)" onclick="dpDelete('${id}')">🗑 Delete</button>
+        ` : ''}
+      </div>`;
+    } else {
+      actionBar = `<div class="dp-action-bar">
+        ${me && me.role === 'admin' ? `
+          <button class="btn btn-danger btn-sm" style="margin-left:auto;background:transparent;border:1px solid var(--critical);color:var(--critical)" onclick="dpDelete('${id}')">🗑 Delete</button>
+        ` : ''}
       </div>`;
     }
 
@@ -2134,6 +2143,21 @@ async function dpConfirmReject(id) {
     document.getElementById('dp-rj-overlay').remove();
     await loadTickets();
     selectTicket(id);
+  } catch(e) { alert('Error: ' + e.message); }
+}
+
+async function dpDelete(id) {
+  if (!confirm(`Permanently delete ticket ${id}? This cannot be undone.`)) return;
+  try {
+    await api(`/tickets/${id}`, { method: 'DELETE' });
+    _selTicketID = null;
+    document.getElementById('split-detail').innerHTML = `
+      <div class="split-empty">
+        <div class="split-empty-icon">🗑</div>
+        <h3>Ticket deleted</h3>
+        <p>Ticket ${id} has been permanently removed</p>
+      </div>`;
+    await loadTickets();
   } catch(e) { alert('Error: ' + e.message); }
 }
 
