@@ -649,6 +649,237 @@ hr { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
   border-radius: 50%; flex-shrink: 0;
 }
 
+/* ══════════════════════════════════════════════════════════
+   PAGE LOADER
+══════════════════════════════════════════════════════════ */
+#page-loader {
+  position: fixed; inset: 0; z-index: 9999;
+  background: #0a0c10;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 0;
+  transition: opacity .4s ease, visibility .4s ease;
+}
+#page-loader.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+
+.loader-scene {
+  display: flex; flex-direction: column;
+  align-items: center; gap: 0;
+  position: relative;
+  height: 180px;
+}
+
+/* The ball */
+.loader-ball {
+  width: 64px; height: 64px; border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #555, #1a1a1a);
+  position: absolute;
+  top: 10px;
+  animation: ball-bounce 0.7s cubic-bezier(.33,0,.66,1) infinite alternate;
+  box-shadow: inset -6px -4px 10px rgba(255,255,255,.05), inset 4px 3px 8px rgba(255,255,255,.12);
+}
+.loader-ball::after {
+  content: '';
+  position: absolute;
+  top: 14px; left: 18px;
+  width: 14px; height: 10px;
+  background: rgba(255,255,255,.55);
+  border-radius: 50%;
+  transform: rotate(-30deg);
+}
+
+/* Shadow under ball */
+.loader-shadow {
+  width: 64px; height: 14px;
+  background: radial-gradient(ellipse, rgba(59,130,246,.35) 0%, transparent 70%);
+  border-radius: 50%;
+  position: absolute;
+  bottom: 66px;
+  animation: shadow-scale 0.7s cubic-bezier(.33,0,.66,1) infinite alternate;
+}
+
+/* Progress bar */
+.loader-bar-wrap {
+  position: absolute;
+  bottom: 30px;
+  width: 180px; height: 18px;
+  background: rgba(255,255,255,.08);
+  border-radius: 20px;
+  border: 2px solid rgba(255,255,255,.12);
+  overflow: hidden;
+}
+.loader-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #1d4ed8, #3b82f6);
+  border-radius: 20px;
+  width: 0%;
+  animation: bar-fill 2.2s ease forwards;
+}
+
+.loader-text {
+  position: absolute;
+  bottom: 0;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px; font-weight: 500;
+  color: rgba(255,255,255,.4);
+  letter-spacing: .3px;
+}
+
+@keyframes ball-bounce {
+  from { top: 10px; transform: scaleX(1) scaleY(1); }
+  to   { top: 72px; transform: scaleX(1.1) scaleY(.88); }
+}
+@keyframes shadow-scale {
+  from { transform: scaleX(.4); opacity: .3; }
+  to   { transform: scaleX(1);  opacity: .8; }
+}
+@keyframes bar-fill {
+  0%   { width: 0%; }
+  30%  { width: 35%; }
+  60%  { width: 65%; }
+  85%  { width: 88%; }
+  100% { width: 100%; }
+}
+
+/* ══════════════════════════════════════════════════════════
+   SPLIT PANEL — All Tickets
+══════════════════════════════════════════════════════════ */
+.split-panel {
+  display: grid;
+  grid-template-columns: 380px 1fr;
+  gap: 14px;
+  height: calc(100vh - var(--topbar-h) - 180px);
+  min-height: 520px;
+}
+.split-left {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow-y: auto;
+  display: flex; flex-direction: column;
+}
+.split-left-header {
+  padding: 10px 14px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+  border-radius: 12px 12px 0 0;
+  display: flex; align-items: center; justify-content: space-between;
+  flex-shrink: 0;
+}
+.split-left-header span {
+  font-size: 10px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .8px; color: var(--muted);
+}
+.split-left-count {
+  font-size: 10px; font-family: 'DM Mono', monospace; color: var(--accent2);
+}
+.split-right {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow-y: auto;
+  display: flex; flex-direction: column;
+  position: relative;
+}
+.split-empty {
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  height: 100%; color: var(--muted);
+  text-align: center; padding: 40px;
+}
+.split-empty-icon { font-size: 36px; margin-bottom: 12px; opacity: .4; }
+.split-empty h3 { font-size: 14px; font-weight: 600; color: var(--muted2); margin-bottom: 6px; }
+.split-empty p { font-size: 12px; color: var(--muted); }
+
+/* Ticket list items */
+.tkt-item {
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: background .1s;
+}
+.tkt-item:last-child { border-bottom: none; }
+.tkt-item:hover { background: var(--card2); }
+.tkt-item.selected {
+  background: var(--accent-glow);
+  border-left: 3px solid var(--accent);
+}
+.tkt-item-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+.tkt-item-id { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--accent2); }
+.tkt-item-heading {
+  font-size: 12px; font-weight: 600; color: var(--text);
+  margin-bottom: 5px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.tkt-item-meta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.tkt-item-broker { font-size: 10px; color: var(--muted2); margin-left: auto; }
+
+/* Detail panel */
+.dp-scroll { flex: 1; overflow-y: auto; padding: 18px; }
+.dp-header {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  padding-bottom: 14px; margin-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+  gap: 12px;
+}
+.dp-header-id { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--accent2); margin-bottom: 5px; display: block; }
+.dp-header h2 { font-size: 15px; font-weight: 700; color: var(--text); line-height: 1.4; }
+.dp-header-badges { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+.dp-section {
+  background: var(--card2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 10px;
+}
+.dp-section-title {
+  font-size: 9px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .8px; color: var(--accent2);
+  font-family: 'DM Mono', monospace;
+  margin-bottom: 10px;
+}
+.dp-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.dp-field label {
+  display: block; font-size: 9px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .5px;
+  color: var(--muted); margin-bottom: 3px;
+}
+.dp-field span { font-size: 12px; font-weight: 500; color: var(--muted2); }
+.dp-field span.hi { color: var(--text); font-family: 'DM Mono', monospace; font-size: 12px; }
+
+/* Action footer inside detail */
+.dp-action-bar {
+  flex-shrink: 0;
+  background: var(--panel);
+  border-top: 1px solid var(--border);
+  padding: 12px 18px;
+  border-radius: 0 0 12px 12px;
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+}
+.dp-action-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); }
+
+/* Reject modal overlay (inside split panel) */
+.rj-modal-bg {
+  position: absolute; inset: 0; z-index: 50;
+  background: rgba(0,0,0,.7);
+  backdrop-filter: blur(3px);
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 12px;
+}
+.rj-modal-box {
+  background: var(--card);
+  border: 1px solid var(--border2);
+  border-radius: 14px;
+  padding: 24px;
+  width: min(400px, 90%);
+  animation: fadeUp .2s ease both;
+}
+.rj-modal-box h3 { font-size: 15px; font-weight: 700; color: var(--critical); margin-bottom: 6px; }
+.rj-modal-box p { font-size: 12px; color: var(--muted2); margin-bottom: 14px; line-height: 1.6; }
+.rj-char { font-size: 10px; color: var(--muted); text-align: right; margin-top: -10px; margin-bottom: 12px; font-family: 'DM Mono', monospace; }
+.rj-err { font-size: 11px; color: var(--critical); margin-bottom: 10px; }
+.rj-btns { display: flex; gap: 8px; justify-content: flex-end; }
+
 /* ── Reports date filter ────────────────────────────────── */
 .report-filter {
   background: var(--card);
@@ -669,6 +900,20 @@ hr { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
 </style>
 </head>
 <body>
+
+<!-- ══════════════════════════════════════════════════════
+     PAGE LOADER
+════════════════════════════════════════════════════════ -->
+<div id="page-loader">
+  <div class="loader-scene">
+    <div class="loader-ball"></div>
+    <div class="loader-shadow"></div>
+    <div class="loader-bar-wrap">
+      <div class="loader-bar-fill"></div>
+    </div>
+    <div class="loader-text">Loading...</div>
+  </div>
+</div>
 
 <!-- ══════════════════════════════════════════════════════
      LOGIN
@@ -928,14 +1173,14 @@ hr { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
 
     <!-- ── All Tickets ─────────────────────────────────── -->
     <div class="page" id="page-tickets">
-      <div class="page-header">
+      <div class="page-header" style="margin-bottom:14px">
         <div class="page-header-left">
           <h2>All Tickets</h2>
-          <p>Filter and manage all support tickets</p>
+          <p>Click a ticket to review details and take action</p>
         </div>
       </div>
 
-      <div class="filters">
+      <div class="filters" style="margin-bottom:12px">
         <div class="fg">
           <label>Broker</label>
           <select id="f-broker"><option value="">All Brokers</option></select>
@@ -971,21 +1216,31 @@ hr { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
           <label>To</label>
           <input type="date" id="f-to"/>
         </div>
-        <button class="btn btn-primary btn-sm" onclick="loadTickets()">Apply Filter</button>
+        <button class="btn btn-primary btn-sm" onclick="loadTickets()">Apply</button>
         <button class="btn btn-ghost btn-sm" onclick="clearFilters()">Clear</button>
       </div>
 
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Ticket ID</th><th>Broker</th><th>Category</th>
-              <th>Heading</th><th>Priority</th><th>Status</th>
-              <th>SLA</th><th>Raised At</th><th>Assigned To</th><th>Action</th>
-            </tr>
-          </thead>
-          <tbody id="tickets-tbody"><tr><td colspan="10" class="loading"></td></tr></tbody>
-        </table>
+      <!-- Split Panel -->
+      <div class="split-panel">
+
+        <!-- Left: Ticket List -->
+        <div class="split-left">
+          <div class="split-left-header">
+            <span>Queue</span>
+            <span class="split-left-count" id="split-count">0 tickets</span>
+          </div>
+          <div id="tickets-list" style="flex:1;overflow-y:auto"><div class="loading"></div></div>
+        </div>
+
+        <!-- Right: Detail Panel -->
+        <div class="split-right" id="split-detail">
+          <div class="split-empty">
+            <div class="split-empty-icon">🎟</div>
+            <h3>No ticket selected</h3>
+            <p>Click any ticket from the queue to view full details and take action</p>
+          </div>
+        </div>
+
       </div>
     </div>
 
@@ -1311,6 +1566,10 @@ function doLogout() {
 // App init  (UNCHANGED logic, updated DOM refs)
 // ──────────────────────────────────────────────────────────
 function initApp() {
+  // Hide loader
+  const loader = document.getElementById('page-loader');
+  if (loader) { loader.classList.add('hidden'); setTimeout(() => loader.remove(), 500); }
+
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('app').style.display = 'flex';
 
@@ -1669,8 +1928,10 @@ function ticketRow(t, cols) {
 }
 
 // ──────────────────────────────────────────────────────────
-// All Tickets  (UNCHANGED)
+// All Tickets — Split Panel
 // ──────────────────────────────────────────────────────────
+let _selTicketID = null;
+
 async function loadTickets() {
   const params = new URLSearchParams();
   const broker   = document.getElementById('f-broker').value;
@@ -1686,15 +1947,32 @@ async function loadTickets() {
   if (from)     params.set('dateFrom',   from);
   if (to)       params.set('dateTo',     to);
 
-  document.getElementById('tickets-tbody').innerHTML = `<tr><td colspan="10" class="loading"></td></tr>`;
+  const list = document.getElementById('tickets-list');
+  list.innerHTML = '<div class="loading"></div>';
   try {
     const tickets = await api('/tickets?' + params);
-    document.getElementById('tickets-tbody').innerHTML = tickets.length
-      ? tickets.map(t => ticketRow(t, 10)).join('')
-      : `<tr><td colspan="10" class="empty"></td></tr>`;
+    document.getElementById('split-count').textContent = tickets.length + ' tickets';
+    if (!tickets.length) {
+      list.innerHTML = '<div class="empty">No tickets found</div>';
+      return;
+    }
+    list.innerHTML = tickets.map(t => {
+      const sla = t.SLAStatus || (t.SLABreached ? 'BREACHED' : 'OK');
+      return `<div class="tkt-item${_selTicketID===t.TicketID?' selected':''}" onclick="selectTicket('${t.TicketID}')">
+        <div class="tkt-item-top">
+          <span class="tkt-item-id">${t.TicketID}</span>
+          <div style="display:flex;gap:5px">${badge('',t.Priority)}${badge('',sla)}</div>
+        </div>
+        <div class="tkt-item-heading">${t.Heading}</div>
+        <div class="tkt-item-meta">
+          ${badge('',t.Status)}
+          <span class="tkt-item-broker">${t.BrokerName||'—'} · ${t.CategoryName||'—'}</span>
+        </div>
+      </div>`;
+    }).join('');
+    if (_selTicketID) selectTicket(_selTicketID);
   } catch(e) {
-    document.getElementById('tickets-tbody').innerHTML =
-      `<tr><td colspan="10" style="text-align:center;padding:32px;color:var(--critical)">Error: ${e.message}</td></tr>`;
+    list.innerHTML = `<div style="text-align:center;padding:32px;color:var(--critical);font-size:13px">Error: ${e.message}</div>`;
   }
 }
 
@@ -1702,6 +1980,161 @@ function clearFilters() {
   ['f-broker','f-category','f-priority','f-status'].forEach(id => document.getElementById(id).value = '');
   ['f-from','f-to'].forEach(id => document.getElementById(id).value = '');
   loadTickets();
+}
+
+async function selectTicket(id) {
+  _selTicketID = id;
+  document.querySelectorAll('.tkt-item').forEach(el => {
+    el.classList.toggle('selected', el.getAttribute('onclick') === `selectTicket('${id}')`);
+  });
+  const panel = document.getElementById('split-detail');
+  panel.innerHTML = '<div class="loading" style="padding:60px"></div>';
+  try {
+    const t = await api('/tickets/' + id);
+    const sla = t.SLAStatus || (t.SLABreached ? 'BREACHED' : 'OK');
+    const canAct = t.Status !== 'closed' && t.Status !== 'rejected';
+
+    let dynHTML = '';
+    if (t.dynamicFields && t.dynamicFields.length) {
+      dynHTML = `<div class="dp-section">
+        <div class="dp-section-title">📋 Category Details</div>
+        <div class="dp-fields">${t.dynamicFields.map(f=>`
+          <div class="dp-field"><label>${f.FieldName}</label><span class="hi">${f.FieldValue||'—'}</span></div>`).join('')}
+        </div>
+      </div>`;
+    }
+
+    let resHTML = t.ResolutionNotes ? `<div class="dp-section" style="border-color:rgba(34,197,94,.2)">
+      <div class="dp-section-title" style="color:#4ade80">✅ Resolution Notes</div>
+      <p style="font-size:12px;color:var(--muted2);line-height:1.7;white-space:pre-wrap">${t.ResolutionNotes}</p>
+    </div>` : '';
+
+    let rejHTML = (t.IsRejected || t.Status==='rejected') ? `<div class="rejection-box">
+      <div class="rj-label">🚫 Rejected by: ${t.RejectedByName||'—'}</div>
+      <p style="font-size:13px;color:var(--muted2)">${t.RejectionReason||'—'}</p>
+    </div>` : '';
+
+    let tlHTML = '';
+    if (t.timeline && t.timeline.length) {
+      tlHTML = `<div class="dp-section">
+        <div class="dp-section-title">🕐 Timeline</div>
+        <div class="timeline">${t.timeline.map(tl=>`
+          <div class="timeline-item">
+            <div class="tl-line"><div class="timeline-dot"></div></div>
+            <div style="flex:1">
+              <div style="font-size:12px;font-weight:600;text-transform:capitalize">${tl.ActionType}</div>
+              <div style="font-size:12px;color:var(--muted2);margin-top:2px">${tl.ActionNote||''}</div>
+              <div class="timeline-meta">${tl.ActionByName||'—'} · ${fmt(tl.ActionAt)}</div>
+            </div>
+          </div>`).join('')}
+        </div>
+      </div>`;
+    }
+
+    let actionBar = '';
+    if (canAct) {
+      actionBar = `<div class="dp-action-bar">
+        <span class="dp-action-label">Action:</span>
+        <button class="btn btn-success btn-sm" onclick="dpApprove('${id}')">✓ Approve</button>
+        <button class="btn btn-danger btn-sm" onclick="dpShowReject('${id}')">✕ Reject</button>
+        ${me && me.role !== 'support' ? `
+          <button class="btn btn-warning btn-sm" onclick="openAssignModal('${id}')">Assign</button>
+        ` : ''}
+        <button class="btn btn-ghost btn-sm" onclick="openStatusModal('${id}','${t.Status}')">Update Status</button>
+      </div>`;
+    }
+
+    panel.innerHTML = `
+      <div class="dp-scroll">
+        <div class="dp-header">
+          <div>
+            <span class="dp-header-id">${t.TicketID}</span>
+            <h2>${t.Heading}</h2>
+            <div class="dp-header-badges">
+              ${badge('',t.Priority)}${badge('',t.Status)}${badge('',sla)}
+            </div>
+          </div>
+        </div>
+
+        <div class="dp-section">
+          <div class="dp-section-title">📋 Ticket Info</div>
+          <div class="dp-fields">
+            <div class="dp-field"><label>Broker</label><span>${t.BrokerName||'—'}</span></div>
+            <div class="dp-field"><label>Broker Email</label><span>${t.BrokerEmail||'—'}</span></div>
+            <div class="dp-field"><label>Category</label><span>${t.CategoryName||'—'} (SLA: ${t.SLAHours||'?'}h)</span></div>
+            <div class="dp-field"><label>Sub Issue</label><span>${t.SubIssueName||'—'}</span></div>
+            <div class="dp-field"><label>Client Account</label><span class="hi">${t.ClientAccountID||'—'}</span></div>
+            <div class="dp-field"><label>SLA Deadline</label><span>${fmt(t.SLADeadline)}</span></div>
+            <div class="dp-field"><label>Raised By</label><span>${t.RaisedBy||'—'}</span></div>
+            <div class="dp-field"><label>Assigned To</label><span class="hi">${t.AssignedTo||'Unassigned'}</span></div>
+            <div class="dp-field"><label>Raised At</label><span>${fmt(t.RaisedAt)}</span></div>
+            <div class="dp-field"><label>Last Updated</label><span>${fmt(t.LastUpdatedAt)}</span></div>
+          </div>
+        </div>
+
+        ${dynHTML}
+
+        <div class="dp-section">
+          <div class="dp-section-title">💬 Remarks</div>
+          <p style="font-size:12px;color:var(--muted2);line-height:1.7;white-space:pre-wrap">${t.Remarks||'—'}</p>
+        </div>
+
+        ${resHTML}
+        ${rejHTML}
+        ${tlHTML}
+      </div>
+      ${actionBar}
+    `;
+  } catch(e) {
+    panel.innerHTML = `<div style="text-align:center;padding:60px;color:var(--critical);font-size:13px">Error: ${e.message}</div>`;
+  }
+}
+
+// Approve = directly resolve, no popup
+async function dpApprove(id) {
+  try {
+    await api(`/tickets/${id}/status`, { method:'PATCH', body:{ status:'resolved', note:'Approved', resolutionNotes:'Ticket approved and resolved.' } });
+    await loadTickets();
+    selectTicket(id);
+  } catch(e) { alert('Error: ' + e.message); }
+}
+
+// Reject = show inline modal with mandatory remarks
+function dpShowReject(id) {
+  const panel = document.getElementById('split-detail');
+  const overlay = document.createElement('div');
+  overlay.className = 'rj-modal-bg';
+  overlay.id = 'dp-rj-overlay';
+  overlay.innerHTML = `
+    <div class="rj-modal-box">
+      <h3>🚫 Reject Ticket</h3>
+      <p>Ticket <strong style="color:var(--text);font-family:'DM Mono',monospace">${id}</strong> will be rejected. The broker and support team will see your reason. Please be specific so they can respond accordingly.</p>
+      <div class="form-group" style="margin-bottom:6px">
+        <label>Rejection Reason * (min 10 chars)</label>
+        <textarea id="dp-rj-reason" rows="4" placeholder="Explain why this ticket is being rejected…" oninput="document.getElementById('dp-rj-char').textContent=this.value.length"></textarea>
+      </div>
+      <div class="rj-char"><span id="dp-rj-char">0</span>/500</div>
+      <div class="rj-err" id="dp-rj-err" style="display:none">Please provide a reason (at least 10 characters).</div>
+      <div class="rj-btns">
+        <button class="btn btn-ghost btn-sm" onclick="document.getElementById('dp-rj-overlay').remove()">Cancel</button>
+        <button class="btn btn-danger btn-sm" onclick="dpConfirmReject('${id}')">Confirm Reject</button>
+      </div>
+    </div>`;
+  panel.appendChild(overlay);
+  setTimeout(() => overlay.querySelector('textarea').focus(), 50);
+}
+
+async function dpConfirmReject(id) {
+  const reason = document.getElementById('dp-rj-reason').value.trim();
+  const err = document.getElementById('dp-rj-err');
+  if (reason.length < 10) { err.style.display='block'; return; }
+  err.style.display = 'none';
+  try {
+    await api(`/tickets/${id}/reject`, { method:'POST', body:{ reason } });
+    document.getElementById('dp-rj-overlay').remove();
+    await loadTickets();
+    selectTicket(id);
+  } catch(e) { alert('Error: ' + e.message); }
 }
 
 // ──────────────────────────────────────────────────────────
@@ -2091,6 +2524,17 @@ function exportFile(type) {
 // ──────────────────────────────────────────────────────────
 document.querySelectorAll('.modal-overlay').forEach(el => {
   el.addEventListener('click', e => { if (e.target === el) el.classList.remove('open'); });
+});
+
+// Auto-hide loader after page ready (shows login if not authed)
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    const loader = document.getElementById('page-loader');
+    if (loader && !loader.classList.contains('hidden')) {
+      loader.classList.add('hidden');
+      setTimeout(() => loader && loader.remove(), 500);
+    }
+  }, 2400);
 });
 
 // Auto-init if token exists
