@@ -215,16 +215,16 @@ router.patch('/:id/status', auth, async (req, res) => {
         return res.status(403).json({ error: 'Only admin or technical staff can close tickets' });
       }
     }
-    await client.query(`
-      UPDATE tickets SET
-        status            = $1,
-        last_updated_at   = NOW(),
-        closed_at         = CASE WHEN $1='closed' THEN NOW() ELSE closed_at END,
-        closed_by_user_id = CASE WHEN $1='closed' THEN $2 ELSE closed_by_user_id END,
-        resolution_notes  = COALESCE($3, resolution_notes)
-      WHERE ticket_id=$4`,
-      [status, req.user.userID, resolutionNotes || null, req.params.id]
-    );
+   await client.query(`
+  UPDATE tickets SET
+    status            = $1::text,
+    last_updated_at   = NOW(),
+    closed_at         = CASE WHEN $1::text='closed' THEN NOW() ELSE closed_at END,
+    closed_by_user_id = CASE WHEN $1::text='closed' THEN $2::integer ELSE closed_by_user_id END,
+    resolution_notes  = COALESCE($3::text, resolution_notes)
+  WHERE ticket_id=$4::text`,
+  [status, req.user.userID, resolutionNotes || null, req.params.id]
+);
     await client.query(
       `INSERT INTO ticket_timeline (ticket_id, action_by, action_type, action_note) VALUES ($1,$2,$3,$4)`,
       [req.params.id, req.user.userID, status, note || `Status changed to ${status}`]
